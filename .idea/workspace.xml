@@ -3,9 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="6173fe3a-8adc-46ba-a576-5416a330f4e6" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/deeprl_hw2/dqn.py" afterPath="$PROJECT_DIR$/deeprl_hw2/dqn.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/deeprl_hw2/objectives.py" afterPath="$PROJECT_DIR$/deeprl_hw2/objectives.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/deeprl_hw2/policy.py" afterPath="$PROJECT_DIR$/deeprl_hw2/policy.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/deeprl_hw2/preprocessors.py" afterPath="$PROJECT_DIR$/deeprl_hw2/preprocessors.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dqn_atari.py" afterPath="$PROJECT_DIR$/dqn_atari.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -31,11 +29,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="dqn_atari.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="dqn_atari.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/dqn_atari.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-772">
-              <caret line="59" column="67" lean-forward="false" selection-start-line="59" selection-start-column="67" selection-end-line="59" selection-end-column="67" />
+            <state relative-caret-position="367">
+              <caret line="57" column="55" lean-forward="false" selection-start-line="57" selection-start-column="55" selection-end-line="57" selection-end-column="55" />
               <folding>
                 <element signature="e#60#75#0" expanded="true" />
               </folding>
@@ -73,11 +71,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="dqn.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="dqn.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/deeprl_hw2/dqn.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="425">
-              <caret line="91" column="9" lean-forward="false" selection-start-line="91" selection-start-column="9" selection-end-line="91" selection-end-column="9" />
+            <state relative-caret-position="809">
+              <caret line="190" column="54" lean-forward="false" selection-start-line="190" selection-start-column="54" selection-end-line="190" selection-end-column="54" />
               <folding />
             </state>
           </provider>
@@ -99,8 +97,8 @@
       <file leaf-file-name="policy.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/deeprl_hw2/policy.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="476">
-              <caret line="55" column="38" lean-forward="false" selection-start-line="55" selection-start-column="38" selection-end-line="55" selection-end-column="38" />
+            <state relative-caret-position="44">
+              <caret line="81" column="6" lean-forward="false" selection-start-line="81" selection-start-column="6" selection-end-line="81" selection-end-column="6" />
               <folding>
                 <element signature="e#170#188#0" expanded="true" />
               </folding>
@@ -132,10 +130,10 @@
         <option value="$PROJECT_DIR$/deeprl_hw2/core.py" />
         <option value="$PROJECT_DIR$/train.sh" />
         <option value="$PROJECT_DIR$/deeprl_hw2/objectives.py" />
-        <option value="$PROJECT_DIR$/dqn_atari.py" />
-        <option value="$PROJECT_DIR$/deeprl_hw2/policy.py" />
         <option value="$PROJECT_DIR$/deeprl_hw2/preprocessors.py" />
+        <option value="$PROJECT_DIR$/deeprl_hw2/policy.py" />
         <option value="$PROJECT_DIR$/deeprl_hw2/dqn.py" />
+        <option value="$PROJECT_DIR$/dqn_atari.py" />
       </list>
     </option>
   </component>
@@ -526,11 +524,13 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/deeprl_hw2/core.py">
+    <entry file="file://$PROJECT_DIR$/deeprl_hw2/policy.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2142">
-          <caret line="6" column="0" lean-forward="false" selection-start-line="6" selection-start-column="0" selection-end-line="6" selection-end-column="0" />
-          <folding />
+        <state relative-caret-position="44">
+          <caret line="81" column="6" lean-forward="false" selection-start-line="81" selection-start-column="6" selection-end-line="81" selection-end-column="6" />
+          <folding>
+            <element signature="e#170#188#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -561,26 +561,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/deeprl_hw2/policy.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="476">
-          <caret line="55" column="38" lean-forward="false" selection-start-line="55" selection-start-column="38" selection-end-line="55" selection-end-column="38" />
-          <folding>
-            <element signature="e#170#188#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/dqn_atari.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-772">
-          <caret line="59" column="67" lean-forward="false" selection-start-line="59" selection-start-column="67" selection-end-line="59" selection-end-column="67" />
-          <folding>
-            <element signature="e#60#75#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/deeprl_hw2/preprocessors.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="384">
@@ -592,11 +572,29 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/deeprl_hw2/core.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-2142">
+          <caret line="6" column="0" lean-forward="false" selection-start-line="6" selection-start-column="0" selection-end-line="6" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/deeprl_hw2/dqn.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="425">
-          <caret line="91" column="9" lean-forward="false" selection-start-line="91" selection-start-column="9" selection-end-line="91" selection-end-column="9" />
+        <state relative-caret-position="809">
+          <caret line="190" column="54" lean-forward="false" selection-start-line="190" selection-start-column="54" selection-end-line="190" selection-end-column="54" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/dqn_atari.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="367">
+          <caret line="57" column="55" lean-forward="false" selection-start-line="57" selection-start-column="55" selection-end-line="57" selection-end-column="55" />
+          <folding>
+            <element signature="e#60#75#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

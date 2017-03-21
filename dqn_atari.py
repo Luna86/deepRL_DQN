@@ -54,10 +54,8 @@ def create_model(window, input_shape, num_actions,
         #input = Input(shape=(input_size,), batch_shape=None, name='input')
         input = Input(shape=input_size, batch_shape=None, name='input')
         flat_input = Flatten()(input)
-        #with tf.name_scope('hidden1'):
-        #    hidden1 = Dense(100, activation=None)(input)
         with tf.name_scope('output'):
-            output = Dense(num_actions, activation='softmax')(flat_input)
+            output = Dense(num_actions, activation=None)(flat_input)
 
         model = Model(inputs=input, outputs=output)
     print(model.summary())
@@ -117,6 +115,7 @@ def main():  # noqa: D103
     parser.add_argument('--num_iterations', default=10000, type=int, help="num of iterations to run for the training")
     parser.add_argument('--max_episode_length', default=10000, type=int, help='max length of one episode')
     parser.add_argument('--lr', default=0.0001, type=float, help='learning rate')
+    parser.add_argument('--epsilon', default=0.05, type=float, help='epsilon for exploration')
 
     args = parser.parse_args()
 
@@ -137,8 +136,8 @@ def main():  # noqa: D103
     preprocessor = PreprocessorSequence([atari_preprocessor, history_preprocessor])
 
     #setup policy
-    policy = UniformRandomPolicy(num_actions=num_actions)
-
+    #policy = UniformRandomPolicy(num_actions=num_actions)
+    policy = GreedyEpsilonPolicy(epsilon=args.epsilon, num_actions=num_actions)
     #setup DQN agent
     agent = DQNAgent(q_network=model, preprocessor=preprocessor, memory=None, policy=policy, gamma=args.gamma, target_update_freq=args.target_update_freq,
                      num_burn_in=args.num_burn_in, train_freq=args.train_freq, batch_size=args.batch_size)

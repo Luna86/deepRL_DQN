@@ -91,8 +91,9 @@ class GreedyEpsilonPolicy(Policy):
      Initial probability of choosing a random action. Can be changed
      over time.
     """
-    def __init__(self, epsilon):
-        pass
+    def __init__(self, epsilon, num_actions):
+        self.epsilon = epsilon
+        self.num_actions = num_actions
 
     def select_action(self, q_values, **kwargs):
         """Run Greedy-Epsilon for the given Q-values.
@@ -108,8 +109,12 @@ class GreedyEpsilonPolicy(Policy):
         int:
           The action index chosen.
         """
-
-    pass
+        rand = np.random.rand()
+        if rand < self.epsilon:
+            action = np.random.randint(0, self.num_actions)
+        else:
+            action = np.argmax(q_values)
+        return action
 
 
 class LinearDecayGreedyEpsilonPolicy(Policy):

@@ -175,7 +175,7 @@ class DQNAgent:
                 state = env.reset()
                 iter_epi = 0
                 continue
-
+            env.render()
             # todo put into memory
             processed_next_state = self.preprocessor.process_state_for_network(next_state)
             next_q_value = self.calc_q_values(processed_next_state)
@@ -188,7 +188,7 @@ class DQNAgent:
             loss = self.model.train_on_batch(np.expand_dims(processed_state, axis=0), np.expand_dims(target, axis=0))
             if i%10 == 0:
                 print('iter= {0}, loss = {1}'.format(i, loss))
-
+                print('q_value: {0}'.format(q_values))
             state = next_state
             iter_epi += 1
 
