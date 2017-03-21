@@ -40,8 +40,8 @@ class DQNAgent:
     """
     def __init__(self,
                  q_network,
-                 preprocessor,
-                 memory,
+                 preprocessor=None,
+                 memory=None,
                  policy,
                  gamma,
                  target_update_freq,
@@ -70,6 +70,7 @@ class DQNAgent:
         pass
 
     def calc_q_values(self, state):
+        q_values=1
         """Given a state (or batch of states) calculate the Q-values.
 
         Basically run your network on these states.

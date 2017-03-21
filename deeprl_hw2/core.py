@@ -1,6 +1,7 @@
 """Core classes."""
 
-
+from PIL import Image
+import numpy as np
 
 class Sample:
     """Represents a reinforcement learning sample.
@@ -80,6 +81,12 @@ class Preprocessor:
           modified in anyway.
 
         """
+        im = Image.fromarray(state,'RGB')
+        im = im.convert('L')
+        im = im.resize((110, 84), 'BILINEAR')
+        im = im.crop(13,0,110-13,84)
+        state = np.array(im.getdata(), dtype=np.uint8).reshape(im.size[0], im.size[1])
+
         return state
 
     def process_state_for_memory(self, state):
@@ -105,6 +112,11 @@ class Preprocessor:
           modified in any manner.
 
         """
+        im = Image.fromarray(state,'RGB')
+        im = im.convert('L')
+        im = im.resize((110, 84), 'BILINEAR')
+        im = im.crop(13,0,110-13,84)
+        state = np.array(im.getdata(), dtype=np.float32).reshape(im.size[0], im.size[1])
         return state
 
     def process_batch(self, samples):

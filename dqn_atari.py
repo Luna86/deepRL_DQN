@@ -114,8 +114,10 @@ def main():  # noqa: D103
     model = create_model(window=1, input_shape=input_shape, num_actions=num_actions, model_name='linear model')
     optimizer = Adam(lr=0.001)
 
-    model.compile(optimizer=optimizer, loss=mean_huber_loss(), metrics='mse')
+    model.compile(optimizer=optimizer, loss=mean_huber_loss())
     #TODO:train model by using optimizer
+    #TODO: set target for Q learning
+    model.train_on_batch(x,y)
     #TODO:save checkpoints from time to time to output_folder. log training details through tensorboard.
 
     # here is where you should start up a session,

@@ -90,7 +90,7 @@ class AtariPreprocessor(Preprocessor):
         We recommend using the Python Image Library (PIL) to do the
         image conversions.
         """
-        pass
+        return Preprocessor.process_state_for_memory(state)
 
     def process_state_for_network(self, state):
         """Scale, convert to greyscale and store as float32.
@@ -98,7 +98,8 @@ class AtariPreprocessor(Preprocessor):
         Basically same as process state for memory, but this time
         outputs float32 images.
         """
-        pass
+
+        return Preprocessor.process_state_for_network(state)
 
     def process_batch(self, samples):
         """The batches from replay memory will be uint8, convert to float32.
