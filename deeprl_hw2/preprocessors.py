@@ -24,10 +24,10 @@ class HistoryPreprocessor(Preprocessor):
 
     """
 
-    def __init__(self, history_length=1):
+    def __init__(self, history_length=3):
         self.history_length = history_length
         self.initial_list = [np.zeros([84,84])] * history_length
-        self.queue = deque(self.initial_list, maxlen=history_length + 1)
+        self.queue = deque(self.initial_list, maxlen=history_length)
         pass
 
     def process_state_for_network(self, state):
@@ -37,7 +37,7 @@ class HistoryPreprocessor(Preprocessor):
         self.queue.append(state)
         processed_states = np.array(all_states, dtype=float)
         processed_states = np.swapaxes(processed_states, 0, 2)
-        processed_states = np.swapaxes(processed_states, 1, 2)
+        processed_states = np.swapaxes(processed_states, 0, 1)
         return processed_states
 
     def reset(self):
@@ -104,7 +104,7 @@ class AtariPreprocessor(Preprocessor):
         """
         im = Image.fromarray(state,'RGB')
         im = im.convert('L')
-        im = im.resize(self.new_size, 'BILINEAR')
+        im = im.resize(self.new_size, Image.BILINEAR)
         processed_state = np.array(im.getdata(), dtype=np.uint8).reshape(im.size[0], im.size[1])
         return processed_state
 
@@ -116,7 +116,7 @@ class AtariPreprocessor(Preprocessor):
         """
         im = Image.fromarray(state,'RGB')
         im = im.convert('L')
-        im = im.resize(self.new_size, 'BILINEAR')
+        im = im.resize(self.new_size, Image.BILINEAR)
         processed_state = np.array(im.getdata(), dtype=np.float32).reshape(im.size[0], im.size[1])
         return processed_state
 

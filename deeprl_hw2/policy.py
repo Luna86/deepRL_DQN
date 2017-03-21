@@ -53,7 +53,7 @@ class UniformRandomPolicy(Policy):
         assert num_actions >= 1
         self.num_actions = num_actions
 
-    def select_action(self, **kwargs):
+    def select_action(self, q_values, **kwargs):
         """Return a random action index.
 
         This policy cannot contain others (as they would just be ignored).

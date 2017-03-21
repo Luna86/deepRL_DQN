@@ -25,8 +25,8 @@ def huber_loss(y_true, y_pred, max_grad=1.):
     tf.Tensor
       The huber loss.
     """
-    abs_diff = abs(y_pred - y_true)
-    if abs_diff <= max_grad:
+    abs_diff = tf.abs(y_pred - y_true)
+    if tf.less_equal(abs_diff, max_grad) is not None:
         return abs_diff**2 / 2
     else:
         return max_grad * (abs_diff - max_grad / 2)
@@ -53,5 +53,4 @@ def mean_huber_loss(y_true, y_pred, max_grad=1.):
     tf.Tensor
       The mean huber loss.
     """
-    return np.mean(huber_loss(y_true, y_pred, max_grad))
-    pass
+    return tf.reduce_mean(huber_loss(y_true, y_pred, max_grad))

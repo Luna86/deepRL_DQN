@@ -1,4 +1,5 @@
 """Main DQN agent."""
+import numpy as np
 
 class DQNAgent:
     """Class implementing DQN.
@@ -87,10 +88,12 @@ class DQNAgent:
         ------
         Q-values for the state(s)
         """
-        return self.model.predict_on_batch(state)
+        q_values = self.model.predict_on_batch(np.expand_dims(state, axis=0))
+        #print('q_values:{0}'.format(q_values[0]))
+        return q_values
 
 
-    def select_action(self, state, **kwargs):
+    def select_action(self, q_values, **kwargs):
         """Select the action based on the current state.
 
         You will probably want to vary your behavior here based on
@@ -111,8 +114,7 @@ class DQNAgent:
         --------
         selected action
         """
-        processed_state = self.preprocessor.process_state_for_network(state)
-        q_values = self.calc_q_values(processed_state)
+
         return self.policy.select_action(q_values)
 
 
@@ -158,16 +160,34 @@ class DQNAgent:
         """
         state = env.reset()
         iter_epi = 0
-        for iter in range(num_iterations):
+        for i in range(num_iterations):
             if iter_epi >= max_episode_length:
                 iter_epi = 0
                 state = env.reset()
-            action = self.select_action(state)
+
+            processed_state = self.preprocessor.process_state_for_network(state)
+
+            q_values = self.calc_q_values(processed_state)
+            action = self.select_action(q_values)
+
             next_state, reward, is_terminal, debug_info = env.step(action)
+            if is_terminal:
+                state = env.reset()
+                iter_epi = 0
+                continue
+
             # todo put into memory
-            next_q_value = self.calc_q_values(next_state)
-            target = reward + self.gamma * max(next_q_value)
-            loss = self.model.train_on_batch(state, target)
+            processed_next_state = self.preprocessor.process_state_for_network(next_state)
+            next_q_value = self.calc_q_values(processed_next_state)
+
+            #target: only different at chosen action
+            target = reward + self.gamma * max(next_q_value[0])
+            q_values_target = q_values
+            q_values_target[0, action] = target
+
+            loss = self.model.train_on_batch(np.expand_dims(processed_state, axis=0), np.expand_dims(target, axis=0))
+            if i%10 == 0:
+                print('iter= {0}, loss = {1}'.format(i, loss))
 
             state = next_state
             iter_epi += 1

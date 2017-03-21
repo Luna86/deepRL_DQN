@@ -48,13 +48,16 @@ def create_model(window, input_shape, num_actions,
     keras.models.Model
       The Q-model.
     """
-    input_size = input_shape[0] * input_shape[1] * window
+    input_size = (input_shape[0], input_shape[1], window)
+    #input_size = input_shape[0] * input_shape[1] * window
     with tf.name_scope(model_name):
-        input = Input(shape=(input_size, ), batch_shape=None, name='input', dtype=float, sparse=False, tensor=None)
+        #input = Input(shape=(input_size,), batch_shape=None, name='input')
+        input = Input(shape=input_size, batch_shape=None, name='input')
+        flat_input = Flatten()(input)
         #with tf.name_scope('hidden1'):
         #    hidden1 = Dense(100, activation=None)(input)
         with tf.name_scope('output'):
-            output = Dense(num_actions, activation='softmax')(input)
+            output = Dense(num_actions, activation='softmax')(flat_input)
 
         model = Model(inputs=input, outputs=output)
     print(model.summary())
@@ -113,21 +116,20 @@ def main():  # noqa: D103
     parser.add_argument('--batch_size', default=32, type=int, help='batch_size')
     parser.add_argument('--num_iterations', default=10000, type=int, help="num of iterations to run for the training")
     parser.add_argument('--max_episode_length', default=10000, type=int, help='max length of one episode')
+    parser.add_argument('--lr', default=0.0001, type=float, help='learning rate')
 
     args = parser.parse_args()
-    args.input_shape = tuple(args.input_shape)
 
     args.output = get_output_folder(args.output, args.env)
     game_env = gym.make(args.env)
-
     num_actions = game_env.action_space.n
     input_shape=(84, 84)
 
     #setup model
-    model = create_model(window=4, input_shape=input_shape, num_actions=num_actions, model_name='linear model')
+    model = create_model(window=4, input_shape=input_shape, num_actions=num_actions, model_name='linear_model')
 
     #setup optimizer
-    optimizer = Adam(lr=0.001)
+    optimizer = Adam(lr=args.lr)
 
     #setup preprocessor
     atari_preprocessor = AtariPreprocessor(input_shape)
@@ -139,7 +141,7 @@ def main():  # noqa: D103
 
     #setup DQN agent
     agent = DQNAgent(q_network=model, preprocessor=preprocessor, memory=None, policy=policy, gamma=args.gamma, target_update_freq=args.target_update_freq,
-                     num_burn_in=args.num_burn_in, train_freq=args.train_freq, batch_size=args.batch_sizes)
+                     num_burn_in=args.num_burn_in, train_freq=args.train_freq, batch_size=args.batch_size)
     agent.compile(optimizer=optimizer, loss_func=mean_huber_loss)
     agent.fit(env=game_env, num_iterations=args.num_iterations, max_episode_length=args.max_episode_length)
 
