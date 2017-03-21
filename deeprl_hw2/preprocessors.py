@@ -27,7 +27,7 @@ class HistoryPreprocessor(Preprocessor):
     def __init__(self, history_length=1):
         self.history_length = history_length
         self.initial_list = [np.zeros([84,84])] * history_length
-        self.queue = deque(self.initial_list, maxlen=history_length)
+        self.queue = deque(self.initial_list, maxlen=history_length + 1)
         pass
 
     def process_state_for_network(self, state):

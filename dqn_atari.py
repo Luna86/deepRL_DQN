@@ -48,13 +48,15 @@ def create_model(window, input_shape, num_actions,
     keras.models.Model
       The Q-model.
     """
-    input = Input(shape=input_shape, batch_shape=None, name='input', dtype=K.floatx(), sparse=False, tensor=None)
-    with tf.name_scope('hidden1'):
-        hidden1 = Dense(100, activation=None)(input)
-    with tf.name_scope('output'):
-        output = Dense(num_actions, activation='softmax')(hidden1)
+    input_size = input_shape[0] * input_shape[1] * window
+    with tf.name_scope(model_name):
+        input = Input(shape=(input_size, ), batch_shape=None, name='input', dtype=float, sparse=False, tensor=None)
+        #with tf.name_scope('hidden1'):
+        #    hidden1 = Dense(100, activation=None)(input)
+        with tf.name_scope('output'):
+            output = Dense(num_actions, activation='softmax')(input)
 
-    model = Model(inputs=input, outputs=output)
+        model = Model(inputs=input, outputs=output)
     print(model.summary())
 
     return model
@@ -100,16 +102,16 @@ def get_output_folder(parent_dir, env_name):
 
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on given game environment')
-    parser.add_argument('--env', default='Breakout-v0', help='Atari env name')
+    parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
     parser.add_argument(
-        '-o', '--output', default='atari-v0', help='Directory to save data to')
+        '-o', '--output', default='SpaceInvaders-v0', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
     parser.add_argument('--gamma', default=0.99, type=float, help='Discount factor')
     parser.add_argument('--target_update_freq', default=10000, type=int, help='interval between two updates of the target network')
     parser.add_argument('--num_burn_in', default=10, type=int, help='number of samples to be filled into the replay memory before updating the network')
     parser.add_argument('--train_freq', default=1, type=int, help='How often to update the Q-network')
     parser.add_argument('--batch_size', default=32, type=int, help='batch_size')
-    parser.add_argument('--num_iterations', default=10000, type=int, help='num of iterations to run for the training')
+    parser.add_argument('--num_iterations', default=10000, type=int, help="num of iterations to run for the training")
     parser.add_argument('--max_episode_length', default=10000, type=int, help='max length of one episode')
 
     args = parser.parse_args()
@@ -122,7 +124,7 @@ def main():  # noqa: D103
     input_shape=(84, 84)
 
     #setup model
-    model = create_model(window=1, input_shape=input_shape, num_actions=num_actions, model_name='linear model')
+    model = create_model(window=4, input_shape=input_shape, num_actions=num_actions, model_name='linear model')
 
     #setup optimizer
     optimizer = Adam(lr=0.001)
