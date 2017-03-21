@@ -40,15 +40,24 @@ class DQNAgent:
     """
     def __init__(self,
                  q_network,
-                 preprocessor=None,
-                 memory=None,
+                 preprocessor,
+                 memory,
                  policy,
                  gamma,
                  target_update_freq,
                  num_burn_in,
                  train_freq,
                  batch_size):
-        pass
+        self.model = q_network
+        self.preprocessor = preprocessor
+        self.memory = memory
+        self.policy = policy
+        self.gamma = gamma
+        self.target_update_freq = target_update_freq
+        self.num_burn_in = num_burn_in
+        self.train_freq = train_freq
+        self.batch_size = batch_size
+
 
     def compile(self, optimizer, loss_func):
         """Setup all of the TF graph variables/ops.
@@ -67,10 +76,9 @@ class DQNAgent:
         keras.optimizers.Optimizer class. Specifically the Adam
         optimizer.
         """
-        pass
+        self.model.compile(optimizer=optimizer, loss=loss_func)
 
     def calc_q_values(self, state):
-        q_values=1
         """Given a state (or batch of states) calculate the Q-values.
 
         Basically run your network on these states.
@@ -79,7 +87,8 @@ class DQNAgent:
         ------
         Q-values for the state(s)
         """
-        pass
+        return self.model.predict_on_batch(state)
+
 
     def select_action(self, state, **kwargs):
         """Select the action based on the current state.
@@ -102,7 +111,10 @@ class DQNAgent:
         --------
         selected action
         """
-        pass
+        processed_state = self.preprocessor.process_state_for_network(state)
+        q_values = self.calc_q_values(processed_state)
+        return self.policy.select_action(q_values)
+
 
     def update_policy(self):
         """Update your policy.
@@ -137,16 +149,29 @@ class DQNAgent:
         Parameters
         ----------
         env: gym.Env
-          This is your Atari environment. You should wrap the
-          environment using the wrap_atari_env function in the
-          utils.py
+          This is your Atari environment.
         num_iterations: int
           How many samples/updates to perform.
         max_episode_length: int
           How long a single episode should last before the agent
           resets. Can help exploration.
         """
-        pass
+        state = env.reset()
+        iter_epi = 0
+        for iter in range(num_iterations):
+            if iter_epi >= max_episode_length:
+                iter_epi = 0
+                state = env.reset()
+            action = self.select_action(state)
+            next_state, reward, is_terminal, debug_info = env.step(action)
+            # todo put into memory
+            next_q_value = self.calc_q_values(next_state)
+            target = reward + self.gamma * max(next_q_value)
+            loss = self.model.train_on_batch(state, target)
+
+            state = next_state
+            iter_epi += 1
+
 
     def evaluate(self, env, num_episodes, max_episode_length=None):
         """Test your agent with a provided environment.
@@ -161,4 +186,13 @@ class DQNAgent:
         You can also call the render function here if you want to
         visually inspect your policy.
         """
+        for i in range(num_episodes):
+            state = env.reset()
+            env.render()
+            for j in range(max_episode_length):
+                action = self.select_action(state)
+                next_state, reward, is_terminal, debug_info = env.step(action)
+                env.render()
+                state = next_state
+
         pass

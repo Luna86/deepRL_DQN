@@ -1,6 +1,5 @@
 """Core classes."""
 
-from PIL import Image
 import numpy as np
 
 class Sample:
@@ -33,7 +32,13 @@ class Sample:
     is_terminal: boolean
       True if this action finished the episode. False otherwise.
     """
-    pass
+    def __init__(self, state, action, reward, next_state, is_terminal):
+        self.state = state
+        self.action = action
+        self.reward = reward
+        self.next_state = next_state
+        self.is_terminal = is_terminal
+
 
 
 class Preprocessor:
@@ -74,6 +79,7 @@ class Preprocessor:
         state: np.ndarray
           Generally a numpy array. A single state from an environment.
 
+
         Returns
         -------
         processed_state: np.ndarray
@@ -81,11 +87,6 @@ class Preprocessor:
           modified in anyway.
 
         """
-        im = Image.fromarray(state,'RGB')
-        im = im.convert('L')
-        im = im.resize((110, 84), 'BILINEAR')
-        im = im.crop(13,0,110-13,84)
-        state = np.array(im.getdata(), dtype=np.uint8).reshape(im.size[0], im.size[1])
 
         return state
 
@@ -112,11 +113,7 @@ class Preprocessor:
           modified in any manner.
 
         """
-        im = Image.fromarray(state,'RGB')
-        im = im.convert('L')
-        im = im.resize((110, 84), 'BILINEAR')
-        im = im.crop(13,0,110-13,84)
-        state = np.array(im.getdata(), dtype=np.float32).reshape(im.size[0], im.size[1])
+
         return state
 
     def process_batch(self, samples):
@@ -217,9 +214,14 @@ class ReplayMemory:
         We recommend using a list as a ring buffer. Just track the
         index where the next sample should be inserted in the list.
         """
+        self.max_size = max_size
+        self.window_length = window_length
+        self.buffer = []
+        self.insert_index = 0
         pass
 
     def append(self, state, action, reward):
+        #todo: how to know next_state and is_terminal?
         raise NotImplementedError('This method should be overridden')
 
     def end_episode(self, final_state, is_terminal):

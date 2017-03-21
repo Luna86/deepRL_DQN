@@ -5,6 +5,7 @@ from PIL import Image
 
 from deeprl_hw2 import utils
 from deeprl_hw2.core import Preprocessor
+from collections import deque
 
 
 class HistoryPreprocessor(Preprocessor):
@@ -24,18 +25,28 @@ class HistoryPreprocessor(Preprocessor):
     """
 
     def __init__(self, history_length=1):
+        self.history_length = history_length
+        self.initial_list = [np.zeros([84,84])] * history_length
+        self.queue = deque(self.initial_list, maxlen=history_length)
         pass
 
     def process_state_for_network(self, state):
         """You only want history when you're deciding the current action to take."""
-        pass
+
+        all_states = list(self.queue) + [state]
+        self.queue.append(state)
+        processed_states = np.array(all_states, dtype=float)
+        processed_states = np.swapaxes(processed_states, 0, 2)
+        processed_states = np.swapaxes(processed_states, 1, 2)
+        return processed_states
 
     def reset(self):
+        self.queue = deque(self.initial_list, maxlen=self.history_length)
         """Reset the history sequence.
 
         Useful when you start a new episode.
         """
-        pass
+        return
 
     def get_config(self):
         return {'history_length': self.history_length}
@@ -78,6 +89,7 @@ class AtariPreprocessor(Preprocessor):
     """
 
     def __init__(self, new_size):
+        self.new_size = new_size
         pass
 
     def process_state_for_memory(self, state):
@@ -90,7 +102,11 @@ class AtariPreprocessor(Preprocessor):
         We recommend using the Python Image Library (PIL) to do the
         image conversions.
         """
-        return Preprocessor.process_state_for_memory(state)
+        im = Image.fromarray(state,'RGB')
+        im = im.convert('L')
+        im = im.resize(self.new_size, 'BILINEAR')
+        processed_state = np.array(im.getdata(), dtype=np.uint8).reshape(im.size[0], im.size[1])
+        return processed_state
 
     def process_state_for_network(self, state):
         """Scale, convert to greyscale and store as float32.
@@ -98,8 +114,11 @@ class AtariPreprocessor(Preprocessor):
         Basically same as process state for memory, but this time
         outputs float32 images.
         """
-
-        return Preprocessor.process_state_for_network(state)
+        im = Image.fromarray(state,'RGB')
+        im = im.convert('L')
+        im = im.resize(self.new_size, 'BILINEAR')
+        processed_state = np.array(im.getdata(), dtype=np.float32).reshape(im.size[0], im.size[1])
+        return processed_state
 
     def process_batch(self, samples):
         """The batches from replay memory will be uint8, convert to float32.
@@ -108,11 +127,23 @@ class AtariPreprocessor(Preprocessor):
         samples from the replay memory. Meaning you need to convert
         both state and next state values.
         """
-        pass
+        processed_samples = []
+        for i, sample in enumerate(samples):
+            processed_sample = sample
+            processed_sample.state = np.array(sample.state, dtype=float)
+            processed_sample.next_state = np.array(sample.next_state, dtype=float)
+            processed_samples.append(processed_sample)
+
+        return processed_samples
 
     def process_reward(self, reward):
         """Clip reward between -1 and 1."""
-        pass
+        processed_reward = 0
+        if reward > 0:
+            processed_reward = 1
+        elif reward < 0:
+            processed_reward = -1
+        return processed_reward
 
 
 class PreprocessorSequence(Preprocessor):
@@ -128,5 +159,12 @@ class PreprocessorSequence(Preprocessor):
     state = atari.process_state_for_network(state)
     return history.process_state_for_network(state)
     """
+    #preprocessors: a list to preprocessors to call
     def __init__(self, preprocessors):
+        self.atari = preprocessors[0]
+        self.history = preprocessors[1]
         pass
+
+    def process_state_for_network(self, state):
+        state = self.atari.process_state_for_network(state)
+        return self.history.process_state_for_network(state)

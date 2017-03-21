@@ -15,6 +15,8 @@ from keras.optimizers import Adam
 import deeprl_hw2 as tfrl
 from deeprl_hw2.dqn import DQNAgent
 from deeprl_hw2.objectives import mean_huber_loss
+from deeprl_hw2.preprocessors import *
+from deeprl_hw2.policy import *
 
 
 def create_model(window, input_shape, num_actions,
@@ -50,7 +52,7 @@ def create_model(window, input_shape, num_actions,
     with tf.name_scope('hidden1'):
         hidden1 = Dense(100, activation=None)(input)
     with tf.name_scope('output'):
-        output = Dense(num_actions, activation='softmax')(input)
+        output = Dense(num_actions, activation='softmax')(hidden1)
 
     model = Model(inputs=input, outputs=output)
     print(model.summary())
@@ -102,23 +104,42 @@ def main():  # noqa: D103
     parser.add_argument(
         '-o', '--output', default='atari-v0', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
+    parser.add_argument('--gamma', default=0.99, type=float, help='Discount factor')
+    parser.add_argument('--target_update_freq', default=10000, type=int, help='interval between two updates of the target network')
+    parser.add_argument('--num_burn_in', default=10, type=int, help='number of samples to be filled into the replay memory before updating the network')
+    parser.add_argument('--train_freq', default=1, type=int, help='How often to update the Q-network')
+    parser.add_argument('--batch_size', default=32, type=int, help='batch_size')
+    parser.add_argument('--num_iterations', default=10000, type=int, help='num of iterations to run for the training')
+    parser.add_argument('--max_episode_length', default=10000, type=int, help='max length of one episode')
 
     args = parser.parse_args()
     args.input_shape = tuple(args.input_shape)
 
     args.output = get_output_folder(args.output, args.env)
     game_env = gym.make(args.env)
-    num_actions = game_env.action_space.n
 
-    input_shape=tuple([84, 84])
+    num_actions = game_env.action_space.n
+    input_shape=(84, 84)
+
+    #setup model
     model = create_model(window=1, input_shape=input_shape, num_actions=num_actions, model_name='linear model')
+
+    #setup optimizer
     optimizer = Adam(lr=0.001)
 
-    model.compile(optimizer=optimizer, loss=mean_huber_loss())
-    #TODO:train model by using optimizer
-    #TODO: set target for Q learning
-    model.train_on_batch(x,y)
-    #TODO:save checkpoints from time to time to output_folder. log training details through tensorboard.
+    #setup preprocessor
+    atari_preprocessor = AtariPreprocessor(input_shape)
+    history_preprocessor = HistoryPreprocessor(history_length=3)
+    preprocessor = PreprocessorSequence([atari_preprocessor, history_preprocessor])
+
+    #setup policy
+    policy = UniformRandomPolicy(num_actions=num_actions)
+
+    #setup DQN agent
+    agent = DQNAgent(q_network=model, preprocessor=preprocessor, memory=None, policy=policy, gamma=args.gamma, target_update_freq=args.target_update_freq,
+                     num_burn_in=args.num_burn_in, train_freq=args.train_freq, batch_size=args.batch_sizes)
+    agent.compile(optimizer=optimizer, loss_func=mean_huber_loss)
+    agent.fit(env=game_env, num_iterations=args.num_iterations, max_episode_length=args.max_episode_length)
 
     # here is where you should start up a session,
     # create your DQN agent, create your model, etc.
