@@ -1,4 +1,7 @@
 """Main DQN agent."""
+import shutil
+import gym
+import os
 import time
 import numpy as np
 from gym import wrappers
@@ -52,7 +55,8 @@ class DQNAgent:
                  num_burn_in,
                  train_freq,
                  batch_size,
-                 logdir):
+                 logdir,
+                 save_freq):
         self.model = q_network
         self.preprocessor = preprocessor
         self.memory = memory
@@ -63,6 +67,7 @@ class DQNAgent:
         self.train_freq = train_freq
         self.batch_size = batch_size
         self.logdir = logdir
+        self.save_freq = save_freq
 
     def compile(self, optimizer, loss_func):
         """Setup all of the TF graph variables/ops.
@@ -89,9 +94,11 @@ class DQNAgent:
         self.loss = self.loss_func(self.y_true, self.y_pred)
         self.train_op = self.optimizer.minimize(self.loss)
         self.init_op = tf.global_variables_initializer()
+        self.test_reward = tf.placeholder(tf.float32, shape=(), name='test_reward')
 
         #set up logger
-        tf.summary.scalar('loss', self.loss)
+        self.reward_summary = tf.summary.scalar('test_reward', self.test_reward)
+        self.loss_summary = tf.summary.scalar('loss', self.loss)
         self.merged = tf.summary.merge_all()
         self.file_writer = tf.summary.FileWriter(self.logdir)
 
@@ -175,6 +182,17 @@ class DQNAgent:
           How long a single episode should last before the agent
           resets. Can help exploration.
         """
+        #check if checkpoint exists
+        ckpt_dir = os.path.join(self.logdir, 'checkpoints')
+        if not os.path.exists(ckpt_dir):
+            os.mkdir(ckpt_dir)
+        if len(os.listdir(ckpt_dir)) > 0:
+            last_iter = 0
+            for past_iter in os.listdir(ckpt_dir):
+                if int(past_iter) > last_iter:
+                    last_iter = past_iter
+            self.model.load_weights(filepath=os.path.join(ckpt_dir, str(last_iter)))
+            print("Restore model from {0}".format(os.path.join(ckpt_dir, str(last_iter))))
         self.sess.run(self.init_op)
 
         state = env.reset()
@@ -209,7 +227,7 @@ class DQNAgent:
             q_values_target = np.array(q_values)
             q_values_target[action] = target
 
-            summary, loss, _ = self.sess.run([self.merged, self.loss, self.train_op], feed_dict={self.y_true:np.expand_dims(q_values_target, axis=0), self.y_pred: np.expand_dims(q_values, axis=0), self.input: np.expand_dims(processed_state, axis=0)})
+            loss_summary, loss, _ = self.sess.run([self.loss_summary, self.loss, self.train_op], feed_dict={self.y_true:np.expand_dims(q_values_target, axis=0), self.y_pred: np.expand_dims(q_values, axis=0), self.input: np.expand_dims(processed_state, axis=0)})
             duration = time.time() - start_time
             if i % 50 == 0:
                 #print('max next q:{0}'.format(max(next_q_value)))
@@ -218,16 +236,26 @@ class DQNAgent:
                 #print('q_values - next_q_values: {0}'.format(max(abs(q_values - next_q_value))))
                 #print('action:{0}'.format(action))
                 #print('q_target: {0}'.format(q_values_target))
-                #print('q_values: {0}'.format(q_values))
+                print('q_values: {0}'.format(q_values))
                 #print('q_values - q_target: {0}'.format(max(abs(q_values - q_values_target))))
                 print('iter= {0}, loss = {1:.4f}, ({2:.2f} sec/iter)'.format(i, loss, duration))
                 print()
-            self.file_writer.add_summary(summary, i)
+                #reward_summary = self.sess.run([self.reward_summary], feed_dict={self.test_reward: average_test_reward})
+                #self.file_writer.add_summary(reward_summary, i)
+            if i > 0 and i % self.save_freq == 0:
+                save_dir = os.path.join(self.logdir, 'checkpoints', str(i))
+                self.model.save_weights(save_dir)
+                print("Saving model at {0}".format(save_dir))
+            if i > 0 and i % (num_iterations / 3) == 0:
+                average_test_reward = self.evaluate(env=gym.make('SpaceInvaders-v0'), num_episodes=1, iter=i)
+                print('Evaluation at iter {0}: average reward for 20 episodes: {1}'.format(i, average_test_reward))
+
+            self.file_writer.add_summary(loss_summary, i)
             state = next_state
             iter_epi += 1
 
 
-    def evaluate(self, env, num_episodes, max_episode_length=None):
+    def evaluate(self, env, num_episodes, iter):
         """Test your agent with a provided environment.
         
         You shouldn't update your network parameters here. Also if you
@@ -240,7 +268,11 @@ class DQNAgent:
         You can also call the render function here if you want to
         visually inspect your policy.
         """
-        #env = wrappers.Monitor(env, self.)
+        monitor_dir = os.path.join(self.logdir, 'gym_monitor', str(iter))
+        print("Monitored evaluation video saved at {0}".format(monitor_dir))
+        if os.path.exists(monitor_dir):
+            shutil.rmtree(monitor_dir)
+        env = wrappers.Monitor(env, monitor_dir)
         total_reward = 0
         for i in range(num_episodes):
             state = env.reset()
@@ -254,3 +286,4 @@ class DQNAgent:
                 state = next_state
                 env.render()
         average_reward = total_reward / num_episodes
+        return average_reward
