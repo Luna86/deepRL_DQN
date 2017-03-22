@@ -26,11 +26,12 @@ def huber_loss(y_true, y_pred, max_grad=1.):
       The huber loss.
     """
     abs_diff = tf.abs(y_pred - y_true)
-    if tf.less_equal(abs_diff, max_grad) is not None:
-        return abs_diff**2 / 2
-    else:
-        return max_grad * (abs_diff - max_grad / 2)
-
+    #if tf.less_equal(abs_diff, max_grad) is not None:
+    #    return abs_diff**2 / 2
+    #else:
+    #    return max_grad * (abs_diff - max_grad / 2)
+    loss = tf.cond(abs_diff <= max_grad, abs_diff ** 2 / 2, max_grad * (abs_diff - max_grad / 2))
+    return loss
 
 def mean_huber_loss(y_true, y_pred, max_grad=1.):
     """Return mean huber loss.

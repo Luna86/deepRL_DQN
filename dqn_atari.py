@@ -105,7 +105,7 @@ def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on given game environment')
     parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
     parser.add_argument(
-        '-o', '--output', default='SpaceInvaders-v0', help='Directory to save data to')
+        '-o', '--output', default='train', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
     parser.add_argument('--gamma', default=0.99, type=float, help='Discount factor')
     parser.add_argument('--target_update_freq', default=10000, type=int, help='interval between two updates of the target network')
@@ -116,10 +116,15 @@ def main():  # noqa: D103
     parser.add_argument('--max_episode_length', default=10000, type=int, help='max length of one episode')
     parser.add_argument('--lr', default=0.0001, type=float, help='learning rate')
     parser.add_argument('--epsilon', default=0.05, type=float, help='epsilon for exploration')
+    parser.add_argument('--experiment_id', default=None, type=int, help='index of experiment to reload checkpoint')
+    parser.add_argument('--save_freq', default=10000, type=int, help='checkpoint saving frequency')
 
     args = parser.parse_args()
 
-    args.output = get_output_folder(args.output, args.env)
+    if not args.experiment_id:
+        args.output = get_output_folder(args.output, args.env)
+    else:
+        args.output = os.path.join(args.output, args.env) + '-run{}'.format(args.experiment_id)
     game_env = gym.make(args.env)
     num_actions = game_env.action_space.n
     input_shape=(84, 84)
@@ -144,7 +149,7 @@ def main():  # noqa: D103
 
     #setup DQN agent
     agent = DQNAgent(q_network=model, preprocessor=preprocessor, memory=None, policy=policy, gamma=args.gamma, target_update_freq=args.target_update_freq,
-                     num_burn_in=args.num_burn_in, train_freq=args.train_freq, batch_size=args.batch_size, logdir=args.output)
+                     num_burn_in=args.num_burn_in, train_freq=args.train_freq, batch_size=args.batch_size, logdir=args.output, save_freq=args.save_freq)
     agent.compile(optimizer=optimizer, loss_func=mean_huber_loss)
     agent.fit(env=game_env, num_iterations=args.num_iterations, max_episode_length=args.max_episode_length)
 
