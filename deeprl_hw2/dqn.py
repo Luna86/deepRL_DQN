@@ -51,7 +51,8 @@ class DQNAgent:
                  target_update_freq,
                  num_burn_in,
                  train_freq,
-                 batch_size):
+                 batch_size,
+                 logdir):
         self.model = q_network
         self.preprocessor = preprocessor
         self.memory = memory
@@ -61,7 +62,7 @@ class DQNAgent:
         self.num_burn_in = num_burn_in
         self.train_freq = train_freq
         self.batch_size = batch_size
-
+        self.logdir = logdir
 
     def compile(self, optimizer, loss_func):
         """Setup all of the TF graph variables/ops.
@@ -85,13 +86,15 @@ class DQNAgent:
         self.y_pred = self.model.outputs[0]
         self.input = self.model.inputs[0]
         self.y_true = tf.placeholder(tf.float32, shape=self.y_pred.get_shape(), name='y_true')
-        #self.y_pred = tf.placeholder(tf.float32, shape=self.model.outputs[0].get_shape(), name='y_true')
-        #self.loss = self.loss_func(self.y_true, self.y_pred)
         self.loss = self.loss_func(self.y_true, self.y_pred)
-        #trainable = tf.trainable_variables()
-        #self.train_op = self.optimizer.minimize(self.loss, var_list=trainable)
         self.train_op = self.optimizer.minimize(self.loss)
         self.init_op = tf.global_variables_initializer()
+
+        #set up logger
+        tf.summary.scalar('loss', self.loss)
+        self.merged = tf.summary.merge_all()
+        self.file_writer = tf.summary.FileWriter(self.logdir)
+
         self.sess = tf.Session()
 
     def calc_q_values(self, state):
@@ -103,11 +106,7 @@ class DQNAgent:
         ------
         Q-values for the state(s)
         """
-        #q_values = self.model.predict_on_batch(np.expand_dims(state, axis=0))
-        #q_values = self.sess.run(self.y_pred, feed_dict={self.model.inputs[0]: np.expand_dims(state, axis=0)})
         q_values = self.sess.run(self.y_pred, feed_dict={self.input: np.expand_dims(state, axis=0)})
-        #q_values = q_values[0]
-        #print('q_values:{0}'.format(q_values[0]))
         return q_values[0]
 
 
@@ -210,8 +209,7 @@ class DQNAgent:
             q_values_target = np.array(q_values)
             q_values_target[action] = target
 
-            #loss = self.model.train_on_batch(np.expand_dims(processed_state, axis=0), np.expand_dims(target, axis=0))
-            loss, _ = self.sess.run([self.loss, self.train_op], feed_dict={self.y_true:np.expand_dims(q_values_target, axis=0), self.y_pred: np.expand_dims(q_values, axis=0), self.input: np.expand_dims(processed_state, axis=0)})
+            summary, loss, _ = self.sess.run([self.merged, self.loss, self.train_op], feed_dict={self.y_true:np.expand_dims(q_values_target, axis=0), self.y_pred: np.expand_dims(q_values, axis=0), self.input: np.expand_dims(processed_state, axis=0)})
             duration = time.time() - start_time
             if i % 50 == 0:
                 #print('max next q:{0}'.format(max(next_q_value)))
@@ -224,6 +222,7 @@ class DQNAgent:
                 #print('q_values - q_target: {0}'.format(max(abs(q_values - q_values_target))))
                 print('iter= {0}, loss = {1:.4f}, ({2:.2f} sec/iter)'.format(i, loss, duration))
                 print()
+            self.file_writer.add_summary(summary, i)
             state = next_state
             iter_epi += 1
 

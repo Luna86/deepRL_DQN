@@ -144,7 +144,7 @@ def main():  # noqa: D103
 
     #setup DQN agent
     agent = DQNAgent(q_network=model, preprocessor=preprocessor, memory=None, policy=policy, gamma=args.gamma, target_update_freq=args.target_update_freq,
-                     num_burn_in=args.num_burn_in, train_freq=args.train_freq, batch_size=args.batch_size)
+                     num_burn_in=args.num_burn_in, train_freq=args.train_freq, batch_size=args.batch_size, logdir=args.output)
     agent.compile(optimizer=optimizer, loss_func=mean_huber_loss)
     agent.fit(env=game_env, num_iterations=args.num_iterations, max_episode_length=args.max_episode_length)
 
