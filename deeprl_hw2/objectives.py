@@ -30,7 +30,7 @@ def huber_loss(y_true, y_pred, max_grad=1.):
     #    return abs_diff**2 / 2
     #else:
     #    return max_grad * (abs_diff - max_grad / 2)
-    loss = tf.cond(abs_diff <= max_grad, abs_diff ** 2 / 2, max_grad * (abs_diff - max_grad / 2))
+    loss = tf.where(abs_diff <= max_grad, abs_diff ** 2 / 2, max_grad * (abs_diff - max_grad / 2))
     return loss
 
 def mean_huber_loss(y_true, y_pred, max_grad=1.):

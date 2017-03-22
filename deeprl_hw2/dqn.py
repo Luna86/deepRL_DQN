@@ -56,7 +56,9 @@ class DQNAgent:
                  train_freq,
                  batch_size,
                  logdir,
-                 save_freq):
+                 save_freq,
+                 evaluate_freq,
+                 test_num_episodes):
         self.model = q_network
         self.preprocessor = preprocessor
         self.memory = memory
@@ -68,6 +70,8 @@ class DQNAgent:
         self.batch_size = batch_size
         self.logdir = logdir
         self.save_freq = save_freq
+        self.evaluate_freq = evaluate_freq
+        self.test_num_episodes = test_num_episodes
 
     def compile(self, optimizer, loss_func):
         """Setup all of the TF graph variables/ops.
@@ -94,10 +98,10 @@ class DQNAgent:
         self.loss = self.loss_func(self.y_true, self.y_pred)
         self.train_op = self.optimizer.minimize(self.loss)
         self.init_op = tf.global_variables_initializer()
-        self.test_reward = tf.placeholder(tf.float32, shape=(), name='test_reward')
+        #self.test_reward = tf.placeholder(tf.float32, shape=(), name='test_reward')
 
         #set up logger
-        self.reward_summary = tf.summary.scalar('test_reward', self.test_reward)
+        #self.reward_summary = tf.summary.scalar('test_reward', self.test_reward)
         self.loss_summary = tf.summary.scalar('loss', self.loss)
         self.merged = tf.summary.merge_all()
         self.file_writer = tf.summary.FileWriter(self.logdir)
@@ -246,8 +250,8 @@ class DQNAgent:
                 save_dir = os.path.join(self.logdir, 'checkpoints', str(i))
                 self.model.save_weights(save_dir)
                 print("Saving model at {0}".format(save_dir))
-            if i > 0 and i % (num_iterations / 3) == 0:
-                average_test_reward = self.evaluate(env=gym.make('SpaceInvaders-v0'), num_episodes=1, iter=i)
+            if i > 0 and i % self.evaluate_freq == 0:
+                average_test_reward = self.evaluate(env=gym.make('SpaceInvaders-v0'), num_episodes=self.test_num_episodes, iter=i)
                 print('Evaluation at iter {0}: average reward for 20 episodes: {1}'.format(i, average_test_reward))
 
             self.file_writer.add_summary(loss_summary, i)

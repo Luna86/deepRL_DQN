@@ -112,12 +112,14 @@ def main():  # noqa: D103
     parser.add_argument('--num_burn_in', default=10, type=int, help='number of samples to be filled into the replay memory before updating the network')
     parser.add_argument('--train_freq', default=1, type=int, help='How often to update the Q-network')
     parser.add_argument('--batch_size', default=32, type=int, help='batch_size')
-    parser.add_argument('--num_iterations', default=10000, type=int, help="num of iterations to run for the training")
+    parser.add_argument('--num_iterations', default=50000, type=int, help="num of iterations to run for the training")
     parser.add_argument('--max_episode_length', default=10000, type=int, help='max length of one episode')
     parser.add_argument('--lr', default=0.0001, type=float, help='learning rate')
     parser.add_argument('--epsilon', default=0.05, type=float, help='epsilon for exploration')
     parser.add_argument('--experiment_id', default=None, type=int, help='index of experiment to reload checkpoint')
     parser.add_argument('--save_freq', default=10000, type=int, help='checkpoint saving frequency')
+    parser.add_argument('--evaluate_freq', default=10000, type=int, help='frequency to do evaluation and record video by wrapper')
+    parser.add_argument('--test_num_episodes', default=20, type=int, help='number of episodes to play at each evaluation')
 
     args = parser.parse_args()
 
@@ -149,7 +151,8 @@ def main():  # noqa: D103
 
     #setup DQN agent
     agent = DQNAgent(q_network=model, preprocessor=preprocessor, memory=None, policy=policy, gamma=args.gamma, target_update_freq=args.target_update_freq,
-                     num_burn_in=args.num_burn_in, train_freq=args.train_freq, batch_size=args.batch_size, logdir=args.output, save_freq=args.save_freq)
+                     num_burn_in=args.num_burn_in, train_freq=args.train_freq, batch_size=args.batch_size, logdir=args.output, save_freq=args.save_freq,
+                     evaluate_freq=args.evaluate_freq, test_num_episodes=args.test_num_episodes)
     agent.compile(optimizer=optimizer, loss_func=mean_huber_loss)
     agent.fit(env=game_env, num_iterations=args.num_iterations, max_episode_length=args.max_episode_length)
 
