@@ -1,8 +1,6 @@
 """Main DQN agent."""
-import time
 import numpy as np
 from gym import wrappers
-import tensorflow as tf
 
 class DQNAgent:
     """Class implementing DQN.
@@ -80,19 +78,7 @@ class DQNAgent:
         keras.optimizers.Optimizer class. Specifically the Adam
         optimizer.
         """
-        self.optimizer = optimizer
-        self.loss_func = loss_func
-        self.y_pred = self.model.outputs[0]
-        self.input = self.model.inputs[0]
-        self.y_true = tf.placeholder(tf.float32, shape=self.y_pred.get_shape(), name='y_true')
-        #self.y_pred = tf.placeholder(tf.float32, shape=self.model.outputs[0].get_shape(), name='y_true')
-        #self.loss = self.loss_func(self.y_true, self.y_pred)
-        self.loss = self.loss_func(self.y_true, self.y_pred)
-        #trainable = tf.trainable_variables()
-        #self.train_op = self.optimizer.minimize(self.loss, var_list=trainable)
-        self.train_op = self.optimizer.minimize(self.loss)
-        self.init_op = tf.global_variables_initializer()
-        self.sess = tf.Session()
+        self.model.compile(optimizer=optimizer, loss=loss_func)
 
     def calc_q_values(self, state):
         """Given a state (or batch of states) calculate the Q-values.
@@ -103,12 +89,9 @@ class DQNAgent:
         ------
         Q-values for the state(s)
         """
-        #q_values = self.model.predict_on_batch(np.expand_dims(state, axis=0))
-        #q_values = self.sess.run(self.y_pred, feed_dict={self.model.inputs[0]: np.expand_dims(state, axis=0)})
-        q_values = self.sess.run(self.y_pred, feed_dict={self.input: np.expand_dims(state, axis=0)})
-        #q_values = q_values[0]
+        q_values = self.model.predict_on_batch(np.expand_dims(state, axis=0))
         #print('q_values:{0}'.format(q_values[0]))
-        return q_values[0]
+        return q_values
 
 
     def select_action(self, q_values, **kwargs):
@@ -176,25 +159,21 @@ class DQNAgent:
           How long a single episode should last before the agent
           resets. Can help exploration.
         """
-        self.sess.run(self.init_op)
-
         state = env.reset()
         iter_epi = 0
         for i in range(num_iterations):
-            start_time = time.time()
             if iter_epi >= max_episode_length:
                 iter_epi = 0
                 state = env.reset()
                 self.preprocessor.reset()
 
             processed_state = self.preprocessor.process_state_for_network(state)
+
             q_values = self.calc_q_values(processed_state)
             action = self.select_action(q_values)
 
             next_state, reward, is_terminal, debug_info = env.step(action)
-            reward = self.preprocessor.process_reward(reward)
             if is_terminal:
-                print('game ends! reset now.')
                 state = env.reset()
                 iter_epi = 0
                 self.preprocessor.reset()
@@ -206,24 +185,14 @@ class DQNAgent:
             next_q_value = self.calc_q_values(processed_next_state)
 
             #target: only different at chosen action
-            target = reward + self.gamma * max(next_q_value)
-            q_values_target = np.array(q_values)
-            q_values_target[action] = target
+            target = reward + self.gamma * max(next_q_value[0])
+            q_values_target = q_values
+            q_values_target[0, action] = target
 
-            #loss = self.model.train_on_batch(np.expand_dims(processed_state, axis=0), np.expand_dims(target, axis=0))
-            loss, _ = self.sess.run([self.loss, self.train_op], feed_dict={self.y_true:np.expand_dims(q_values_target, axis=0), self.y_pred: np.expand_dims(q_values, axis=0), self.input: np.expand_dims(processed_state, axis=0)})
-            duration = time.time() - start_time
-            if i % 50 == 0:
-                #print('max next q:{0}'.format(max(next_q_value)))
-                #print('target:{0}'.format(target))
-                #print('reward: {0}'.format(reward))
-                #print('q_values - next_q_values: {0}'.format(max(abs(q_values - next_q_value))))
-                #print('action:{0}'.format(action))
-                #print('q_target: {0}'.format(q_values_target))
-                #print('q_values: {0}'.format(q_values))
-                #print('q_values - q_target: {0}'.format(max(abs(q_values - q_values_target))))
-                print('iter= {0}, loss = {1:.4f}, ({2:.2f} sec/iter)'.format(i, loss, duration))
-                print()
+            loss = self.model.train_on_batch(np.expand_dims(processed_state, axis=0), np.expand_dims(target, axis=0))
+            if i%10 == 0:
+                print('iter= {0}, loss = {1}'.format(i, loss))
+                print('q_value: {0}'.format(q_values))
             state = next_state
             iter_epi += 1
 
@@ -241,7 +210,7 @@ class DQNAgent:
         You can also call the render function here if you want to
         visually inspect your policy.
         """
-        #env = wrappers.Monitor(env, self.)
+        env = wrappers.Monitor(env, self.)
         total_reward = 0
         for i in range(num_episodes):
             state = env.reset()

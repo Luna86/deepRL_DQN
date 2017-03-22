@@ -35,7 +35,7 @@ class HistoryPreprocessor(Preprocessor):
 
         all_states = list(self.queue) + [state]
         self.queue.append(state)
-        processed_states = np.array(all_states, dtype=float)
+        processed_states = np.array(all_states, dtype=np.float32)
         processed_states = np.swapaxes(processed_states, 0, 2)
         processed_states = np.swapaxes(processed_states, 0, 1)
         return processed_states
@@ -130,8 +130,8 @@ class AtariPreprocessor(Preprocessor):
         processed_samples = []
         for i, sample in enumerate(samples):
             processed_sample = sample
-            processed_sample.state = np.array(sample.state, dtype=float)
-            processed_sample.next_state = np.array(sample.next_state, dtype=float)
+            processed_sample.state = np.array(sample.state, dtype=np.float32)
+            processed_sample.next_state = np.array(sample.next_state, dtype=np.float32)
             processed_samples.append(processed_sample)
 
         return processed_samples
@@ -163,8 +163,12 @@ class PreprocessorSequence(Preprocessor):
     def __init__(self, preprocessors):
         self.atari = preprocessors[0]
         self.history = preprocessors[1]
-        pass
+
+    def reset(self):
+        self.history.reset()
 
     def process_state_for_network(self, state):
         state = self.atari.process_state_for_network(state)
         return self.history.process_state_for_network(state)
+    def process_reward(self, reward):
+        return self.atari.process_reward(reward)

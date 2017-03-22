@@ -124,15 +124,13 @@ def main():  # noqa: D103
     num_actions = game_env.action_space.n
     input_shape=(84, 84)
 
-    #todo: setup logger
-    #writer = tf.summary.FileWriter()
-
+    #setup logger
+    writer = tf.summary.FileWriter()
     #setup model
     model = create_model(window=4, input_shape=input_shape, num_actions=num_actions, model_name='linear_model')
 
     #setup optimizer
-    #optimizer = Adam(lr=args.lr)
-    optimizer = tf.train.AdamOptimizer(learning_rate=args.lr)
+    optimizer = Adam(lr=args.lr)
 
     #setup preprocessor
     atari_preprocessor = AtariPreprocessor(input_shape)
