@@ -72,9 +72,13 @@ class ExperienceReplayMemory(ReplayMemory):
         self.is_terminal_buffer.append(True)
 
     def sample(self, batch_size, indexes=None):
-        batch = []
+        batch = {'next_state': np.zeros([batch_size, 84, 84, self.window_length]),
+                 'state': np.zeros([batch_size, 84, 84, self.window_length]),
+                 'reward': np.zeros([batch_size,]),
+                 'action': np.zeros([batch_size,]),
+                 'is_terminal': np.zeros([batch_size,])}
         # if indexes==None:
-        indexes = np.random.randint(low = self.window_length, high=self.buffer.length, size = [batch_size,1])
+        indexes = np.random.randint(low=self.window_length, high=self.buffer.length, size=[batch_size,1])
         print(indexes)
         for j in range(indexes.size):
             i = indexes[j][0]
@@ -103,9 +107,14 @@ class ExperienceReplayMemory(ReplayMemory):
                     state[:,:,-k-1] = (self.buffer.get(index).frame)
                 else:
                     break
+            batch["next_state"][j] = next_state
+            batch["state"][j] = state
+            batch["reward"][j] = action
+            batch["action"][j] = reward
+            batch["is_terminal"][j] = m.is_terminal
 
-            s = Sample(state = state, action = action, reward=reward, next_state = next_state, is_terminal = m.is_terminal)
-            batch.append(s)
+            # s = Sample(state = state, action = action, reward=reward, next_state = next_state, is_terminal = m.is_terminal)
+            # batch.append(s)
             # for k in range(len(last_k_indexes)):
             #     k_index = last_k_indexes[k]
             #     if self.is_terminal_buffer[k_index] and (k != 0):
