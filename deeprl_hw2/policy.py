@@ -134,11 +134,19 @@ class LinearDecayGreedyEpsilonPolicy(Policy):
 
     """
 
-    def __init__(self, policy, attr_name, start_value, end_value,
+    def __init__(self, num_actions, decay, start_value, end_value,
                  num_steps):  # noqa: D102
+        self.decay = decay
+        self.num_actions = num_actions
+        self.start_value = start_value
+        self.end_value = end_value
+        self.num_steps = num_steps
+
+        self.iter_num = 0
+        self.epsilon = self.start_value
         pass
 
-    def select_action(self, **kwargs):
+    def select_action(self, q_values, is_training):
         """Decay parameter and select action.
 
         Parameters
@@ -153,8 +161,23 @@ class LinearDecayGreedyEpsilonPolicy(Policy):
         Any:
           Selected action.
         """
+        if is_training:
+            self.iter_num = self.iter_num+1
+            if self.iter_num % self.num_steps == 0:
+                self.epsilon = max(self.epsilon*self.decay, self.end_value)
+            rand = np.random.rand()
+            if rand < self.epsilon:
+                action = np.random.randint(0, self.num_actions)
+            else:
+                action = np.argmax(q_values)
+            return action
+        else:
+            return np.argmax(q_values)
+
         pass
 
     def reset(self):
         """Start the decay over at the start value."""
+        self.epsilon = self.start_value
+        self.iter_num = 0
         pass

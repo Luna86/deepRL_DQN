@@ -102,7 +102,7 @@ def main():  # noqa: D103
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
     parser.add_argument('--gamma', default=0.99, type=float, help='Discount factor')
     parser.add_argument('--target_update_freq', default=10000, type=int, help='interval between two updates of the target network')
-    parser.add_argument('--num_burn_in', default=10, type=int, help='number of samples to be filled into the replay memory before updating the network')
+    parser.add_argument('--num_burn_in', default=10000, type=int, help='number of samples to be filled into the replay memory before updating the network')
     parser.add_argument('--train_freq', default=1, type=int, help='How often to update the Q-network')
     parser.add_argument('--batch_size', default=32, type=int, help='batch_size')
     parser.add_argument('--num_iterations', default=50000, type=int, help="num of iterations to run for the training")

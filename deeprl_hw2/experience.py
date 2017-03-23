@@ -75,11 +75,11 @@ class ExperienceReplayMemory(ReplayMemory):
         batch = {'next_state': np.zeros([batch_size, 84, 84, self.window_length]),
                  'state': np.zeros([batch_size, 84, 84, self.window_length]),
                  'reward': np.zeros([batch_size,]),
-                 'action': np.zeros([batch_size,]),
+                 'action': np.zeros([batch_size,], int),
                  'is_terminal': np.zeros([batch_size,])}
         # if indexes==None:
         indexes = np.random.randint(low=self.window_length, high=self.buffer.length, size=[batch_size,1])
-        print(indexes)
+        # print(indexes)
         for j in range(indexes.size):
             i = indexes[j][0]
             print(i)
