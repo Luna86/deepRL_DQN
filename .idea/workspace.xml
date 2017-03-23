@@ -2,14 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6173fe3a-8adc-46ba-a576-5416a330f4e6" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/dqn_atari_replay.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/deeprl_hw2_src.iml" afterPath="$PROJECT_DIR$/.idea/deeprl_hw2_src.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/deeprl_hw2/dqn_replay.py" afterPath="$PROJECT_DIR$/deeprl_hw2/dqn_replay.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/deeprl_hw2/experience.py" afterPath="$PROJECT_DIR$/deeprl_hw2/experience.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/deeprl_hw2/policy.py" afterPath="$PROJECT_DIR$/deeprl_hw2/policy.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dqn_atari.py" afterPath="$PROJECT_DIR$/dqn_atari.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dqn_atari_replay.py" afterPath="$PROJECT_DIR$/dqn_atari_replay.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -61,8 +55,8 @@
           <file leaf-file-name="dqn_atari_replay.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/dqn_atari_replay.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="341">
-                  <caret line="146" column="50" lean-forward="false" selection-start-line="146" selection-start-column="50" selection-end-line="146" selection-end-column="50" />
+                <state relative-caret-position="446">
+                  <caret line="154" column="68" lean-forward="false" selection-start-line="154" selection-start-column="68" selection-end-line="154" selection-end-column="68" />
                   <folding>
                     <element signature="e#60#75#0" expanded="true" />
                   </folding>
@@ -134,11 +128,11 @@
       </split-first>
       <split-second>
         <leaf>
-          <file leaf-file-name="dqn_replay.py" pinned="false" current-in-tab="false">
+          <file leaf-file-name="dqn_replay.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/deeprl_hw2/dqn_replay.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="-2131">
-                  <caret line="183" column="38" lean-forward="true" selection-start-line="183" selection-start-column="38" selection-end-line="183" selection-end-column="38" />
+                <state relative-caret-position="-4051">
+                  <caret line="66" column="25" lean-forward="false" selection-start-line="66" selection-start-column="25" selection-end-line="66" selection-end-column="25" />
                   <folding>
                     <element signature="e#22#35#0" expanded="true" />
                   </folding>
@@ -166,11 +160,11 @@
               </provider>
             </entry>
           </file>
-          <file leaf-file-name="policy.py" pinned="false" current-in-tab="true">
+          <file leaf-file-name="policy.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/deeprl_hw2/policy.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="221">
-                  <caret line="130" column="29" lean-forward="false" selection-start-line="130" selection-start-column="29" selection-end-line="130" selection-end-column="29" />
+                <state relative-caret-position="-79">
+                  <caret line="119" column="36" lean-forward="false" selection-start-line="119" selection-start-column="6" selection-end-line="119" selection-end-column="36" />
                   <folding>
                     <element signature="e#170#188#0" expanded="true" />
                   </folding>
@@ -211,8 +205,8 @@
         <option value="$PROJECT_DIR$/dqn_atari.py" />
         <option value="$PROJECT_DIR$/deeprl_hw2/experience.py" />
         <option value="$PROJECT_DIR$/deeprl_hw2/policy.py" />
-        <option value="$PROJECT_DIR$/deeprl_hw2/dqn_replay.py" />
         <option value="$PROJECT_DIR$/dqn_atari_replay.py" />
+        <option value="$PROJECT_DIR$/deeprl_hw2/dqn_replay.py" />
       </list>
     </option>
   </component>
@@ -854,16 +848,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/deeprl_hw2/dqn_replay.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2131">
-          <caret line="183" column="38" lean-forward="true" selection-start-line="183" selection-start-column="38" selection-end-line="183" selection-end-column="38" />
-          <folding>
-            <element signature="e#22#35#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/setup.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="135">
@@ -872,22 +856,32 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/dqn_atari_replay.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="446">
+          <caret line="154" column="68" lean-forward="false" selection-start-line="154" selection-start-column="68" selection-end-line="154" selection-end-column="68" />
+          <folding>
+            <element signature="e#60#75#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/deeprl_hw2/policy.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="221">
-          <caret line="130" column="29" lean-forward="false" selection-start-line="130" selection-start-column="29" selection-end-line="130" selection-end-column="29" />
+        <state relative-caret-position="-79">
+          <caret line="119" column="36" lean-forward="false" selection-start-line="119" selection-start-column="6" selection-end-line="119" selection-end-column="36" />
           <folding>
             <element signature="e#170#188#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/dqn_atari_replay.py">
+    <entry file="file://$PROJECT_DIR$/deeprl_hw2/dqn_replay.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="341">
-          <caret line="146" column="50" lean-forward="false" selection-start-line="146" selection-start-column="50" selection-end-line="146" selection-end-column="50" />
+        <state relative-caret-position="-4051">
+          <caret line="66" column="25" lean-forward="false" selection-start-line="66" selection-start-column="25" selection-end-line="66" selection-end-column="25" />
           <folding>
-            <element signature="e#60#75#0" expanded="true" />
+            <element signature="e#22#35#0" expanded="true" />
           </folding>
         </state>
       </provider>

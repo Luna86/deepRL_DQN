@@ -50,6 +50,7 @@ class DQNAgent:
 
     def __init__(self,
                  q_network,
+                 q_target_network,
                  preprocessor,
                  memory,
                  policy,
@@ -63,9 +64,10 @@ class DQNAgent:
                  evaluate_freq,
                  test_num_episodes):
         self.model = q_network
+        self.model_target = q_target_network
         self.preprocessor = preprocessor
         self.memory = memory
-        self.policy_train = policy
+        self.policy = policy
         self.gamma = gamma
         self.target_update_freq = target_update_freq
         self.num_burn_in = num_burn_in
@@ -93,6 +95,7 @@ class DQNAgent:
         keras.optimizers.Optimizer class. Specifically the Adam
         optimizer.
         """
+        self.sess = tf.Session()
         self.optimizer = optimizer
         self.loss_func = loss_func
         self.y_pred = self.model.outputs[0]
@@ -103,14 +106,36 @@ class DQNAgent:
         self.loss = self.loss_func(self.y_true, tf.multiply(self.y_pred, self.mask))
 
         self.train_op = self.optimizer.minimize(self.loss)
-        self.init_op = tf.global_variables_initializer()
+        self.init_op = tf.group(tf.initialize_all_variables(), tf.initialize_local_variables())
         self.test_reward = tf.placeholder(tf.float32, shape=(), name='test_reward')
 
+        # init Q-network
+        # check if checkpoint exists
+        ckpt_dir = os.path.join(self.logdir, 'checkpoints')
+        if not os.path.exists(ckpt_dir):
+            os.mkdir(ckpt_dir)
+            self.sess.run(self.init_op)
+            # print("init q - network")
+        if len(os.listdir(ckpt_dir)) > 0:
+            last_iter = 0
+            for past_iter in os.listdir(ckpt_dir):
+                if int(past_iter) > last_iter:
+                    last_iter = past_iter
+            self.model.load_weights(filepath=os.path.join(ckpt_dir, str(last_iter)))
+            # self.sess.run(self.init_op)
+            print("Restore model from {0}".format(os.path.join(ckpt_dir, str(last_iter))))
+
         # define target network
-        config = self.model.get_config()
-        self.model_target = Model.from_config(config=config)
+        # config = self.model.get_config()
+        # self.model_target = Model.from_config(config=config)
+        # copy model
+
+        self.model_target.set_weights(self.model.get_weights())
+        self.sess.run(self.init_op)
         self.y_pred_target = self.model_target.outputs[0]
         self.input_target = self.model_target.inputs[0]
+
+
 
 
 
@@ -120,24 +145,8 @@ class DQNAgent:
         self.merged = tf.summary.merge_all()
         self.file_writer = tf.summary.FileWriter(self.logdir)
 
-        self.sess = tf.Session()
 
-        # check if checkpoint exists
-        ckpt_dir = os.path.join(self.logdir, 'checkpoints')
-        if not os.path.exists(ckpt_dir):
-            os.mkdir(ckpt_dir)
-            self.sess.run(self.init_op)
-        if len(os.listdir(ckpt_dir)) > 0:
-            last_iter = 0
-            for past_iter in os.listdir(ckpt_dir):
-                if int(past_iter) > last_iter:
-                    last_iter = past_iter
-            self.model.load_weights(filepath=os.path.join(ckpt_dir, str(last_iter)))
-            print("Restore model from {0}".format(os.path.join(ckpt_dir, str(last_iter))))
-
-        # copy model
-        self.model_target.set_weights(self.model.get_weights())
-
+        print("compile finished")
 
 
 
@@ -282,6 +291,8 @@ class DQNAgent:
                 # update target policy
                 if i % self.target_update_freq == 0:
                     self.model_target.set_weights(self.model.get_weights())
+                    self.sess.run(self.init_op)
+
 
 
             duration = time.time() - start_time

@@ -130,6 +130,7 @@ def main():  # noqa: D103
 
     #setup model
     model = create_model(window=4, input_shape=input_shape, num_actions=num_actions, model_name='linear_model')
+    model_target = create_model(window=4, input_shape=input_shape, num_actions=num_actions, model_name='linear_model')
 
     #setup optimizer
     #optimizer = Adam(lr=args.lr)
@@ -151,7 +152,7 @@ def main():  # noqa: D103
                                             end_value=0.05,
                                             num_steps=100000)
     #setup DQN agent
-    agent = DQNAgent(q_network=model, preprocessor=preprocessor, memory=memory, policy=policy, gamma=args.gamma, target_update_freq=args.target_update_freq,
+    agent = DQNAgent(q_network=model, q_target_network=model_target, preprocessor=preprocessor, memory=memory, policy=policy, gamma=args.gamma, target_update_freq=args.target_update_freq,
                      num_burn_in=args.num_burn_in, train_freq=args.train_freq, batch_size=args.batch_size, logdir=args.output, save_freq=args.save_freq,
                      evaluate_freq=args.evaluate_freq, test_num_episodes=args.test_num_episodes)
     agent.compile(optimizer=optimizer, loss_func=mean_huber_loss)
