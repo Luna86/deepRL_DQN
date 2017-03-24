@@ -107,7 +107,11 @@ class DQNAgent:
 
         self.train_op = self.optimizer.minimize(self.loss)
         self.init_op = tf.group(tf.initialize_all_variables(), tf.initialize_local_variables())
-        self.test_reward = tf.placeholder(tf.float32, shape=(), name='test_reward')
+        # self.test_reward = tf.placeholder(tf.float32, shape=(), name='test_reward')
+
+        self.reward_record = tf.Variable(0., name='global_r', trainable=False, dtype=tf.float32)
+        self.set_reward = tf.placeholder(tf.float32, shape=[])
+        self.assign_reward_op = tf.assign(self.reward_record, self.set_reward)
 
         # init Q-network
         # check if checkpoint exists
@@ -132,7 +136,7 @@ class DQNAgent:
         # config = self.model.get_config()
         # self.model_target = Model.from_config(config=config)
         # copy model
-        self.sess.run(self.init_op)
+
         self.model_target.set_weights(self.model.get_weights())
         self.y_pred_target = self.model_target.outputs[0]
         self.input_target = self.model_target.inputs[0]
@@ -142,12 +146,14 @@ class DQNAgent:
 
 
         # set up logger
-        self.reward_summary = tf.summary.scalar('test_reward', self.test_reward)
+        # self.reward_summary = tf.summary.scalar('test_reward', self.test_reward)
+        self.r_summary = tf.summary.scalar('reward_test', self.reward_record)
         self.loss_summary = tf.summary.scalar('loss', self.loss)
         self.merged = tf.summary.merge_all()
+        self.merged_r = tf.summary.merge([self.r_summary])
         self.file_writer = tf.summary.FileWriter(self.logdir)
 
-
+        self.sess.run(self.init_op)
         print("compile finished")
 
 
@@ -250,7 +256,7 @@ class DQNAgent:
             action = self.select_action_train(q_values)
 
             next_state, reward, is_terminal, debug_info = env.step(action)
-            env.render()
+            # env.render()
             reward = self.preprocessor.process_reward(reward)
             # todo put into memory
             self.memory.append(state=processed_state.astype(np.uint8), action=action, reward=reward)
@@ -336,7 +342,7 @@ class DQNAgent:
                 self.model.save_weights(save_dir)
                 print("Saving model at {0}".format(save_dir))
             if i > 0 and i % self.evaluate_freq == 0:
-                average_test_reward = self.evaluate(env=gym.make('Breakout-v0'),
+                average_test_reward = self.evaluate(env=gym.make('SpaceInvaders-v0'),
                                                     num_episodes=self.test_num_episodes, iter=i)
                 print('Evaluation at iter {0}: average reward for 20 episodes: {1}'.format(i, average_test_reward))
 
@@ -375,4 +381,7 @@ class DQNAgent:
                 state = next_state
                 env.render()
         average_reward = total_reward / num_episodes
+        self.sess.run(self.assign_reward_op, feed_dict={self.set_reward: average_reward})
+        merged_r = self.sess.run(self.merged_r)
+        self.file_writer.add_summary(merged_r)
         return average_reward
