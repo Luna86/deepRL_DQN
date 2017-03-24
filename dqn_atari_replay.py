@@ -47,14 +47,24 @@ def create_model(window, input_shape, num_actions,
     """
     input_size = (input_shape[0], input_shape[1], window)
     #input_size = input_shape[0] * input_shape[1] * window
-    with tf.name_scope(model_name):
-        #input = Input(shape=(input_size,), batch_shape=None, name='input')
-        input = Input(shape=input_size, batch_shape=None, name='input')
-        flat_input = Flatten()(input)
-        with tf.name_scope('output'):
-            output = Dense(num_actions, activation=None)(flat_input)
+    if model_name == "linear_model":
+        with tf.name_scope(model_name):
+            #input = Input(shape=(input_size,), batch_shape=None, name='input')
+            input = Input(shape=input_size, batch_shape=None, name='input')
+            flat_input = Flatten()(input)
+            with tf.name_scope('output'):
+                output = Dense(num_actions, activation=None)(flat_input)
+    else:
+        print("create deep model")
+        with tf.name_scope(model_name):
+            # input = Input(shape=(input_size,), batch_shape=None, name='input')
+            input = Input(shape=input_size, batch_shape=None, name='input')
+            Convolution2D()
+            flat_input = Flatten()(input)
+            with tf.name_scope('output'):
+                output = Dense(num_actions, activation=None)(flat_input)
 
-        model = Model(inputs=input, outputs=output)
+    model = Model(inputs=input, outputs=output)
     print(model.summary())
 
     return model
@@ -97,7 +107,9 @@ def get_output_folder(parent_dir, env_name):
 
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on given game environment')
-    parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
+    # parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
+    parser.add_argument('--env', default='Breakout-v0', help='Atari env name')
+
     parser.add_argument(
         '-o', '--output', default='train', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')

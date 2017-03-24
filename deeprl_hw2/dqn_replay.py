@@ -111,10 +111,13 @@ class DQNAgent:
 
         # init Q-network
         # check if checkpoint exists
+        if not os.path.exists(self.logdir):
+            os.mkdir(self.logdir)
+
         ckpt_dir = os.path.join(self.logdir, 'checkpoints')
         if not os.path.exists(ckpt_dir):
             os.mkdir(ckpt_dir)
-            self.sess.run(self.init_op)
+            # self.sess.run(self.init_op)
             # print("init q - network")
         if len(os.listdir(ckpt_dir)) > 0:
             last_iter = 0
@@ -129,9 +132,8 @@ class DQNAgent:
         # config = self.model.get_config()
         # self.model_target = Model.from_config(config=config)
         # copy model
-
-        self.model_target.set_weights(self.model.get_weights())
         self.sess.run(self.init_op)
+        self.model_target.set_weights(self.model.get_weights())
         self.y_pred_target = self.model_target.outputs[0]
         self.input_target = self.model_target.inputs[0]
 
@@ -264,19 +266,19 @@ class DQNAgent:
 
             if i>self.num_burn_in:
                 batch = self.memory.sample(self.batch_size)
-                print(batch["next_state"].shape)
+                # print(batch["next_state"].shape)
                 next_q_value = self.calc_target_q_values(batch["next_state"])
                 mask = np.zeros([self.batch_size, env.action_space.n])
-                print(batch["is_terminal"])
-                print(batch["action"])
-                print(batch["reward"])
+                # print(batch["is_terminal"])
+                # print(batch["action"])
+                # print(batch["reward"])
                 for x in range(self.batch_size):
                     # print(batch["is_terminal"][x])
                     if batch["is_terminal"][x]==0:
                         # print(batch["action"][x])
                         mask[x,batch["action"][x]] = 1
 
-                print(next_q_value)
+                # print(next_q_value)
 
                 target = batch["reward"]+self.gamma*np.multiply(1-batch["is_terminal"], next_q_value.max(axis=1))
                 q_values_target = np.zeros([self.batch_size, env.action_space.n])
@@ -291,7 +293,7 @@ class DQNAgent:
                 # update target policy
                 if i % self.target_update_freq == 0:
                     self.model_target.set_weights(self.model.get_weights())
-                    self.sess.run(self.init_op)
+                    # self.sess.run(self.init_op)
 
 
 
@@ -334,7 +336,7 @@ class DQNAgent:
                 self.model.save_weights(save_dir)
                 print("Saving model at {0}".format(save_dir))
             if i > 0 and i % self.evaluate_freq == 0:
-                average_test_reward = self.evaluate(env=gym.make('SpaceInvaders-v0'),
+                average_test_reward = self.evaluate(env=gym.make('Breakout-v0'),
                                                     num_episodes=self.test_num_episodes, iter=i)
                 print('Evaluation at iter {0}: average reward for 20 episodes: {1}'.format(i, average_test_reward))
 
@@ -366,7 +368,7 @@ class DQNAgent:
             is_terminal = 0
             while not is_terminal:
                 processed_state = self.preprocessor.process_state_for_network(state)
-                q_values = self.calc_q_values(processed_state)
+                q_values = self.calc_q_values(np.expand_dims(processed_state, axis=0))
                 action = self.select_action(q_values)
                 next_state, reward, is_terminal, debug_info = env.step(action)
                 total_reward += reward

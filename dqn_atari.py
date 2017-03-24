@@ -105,14 +105,14 @@ def main():  # noqa: D103
     parser.add_argument('--num_burn_in', default=10000, type=int, help='number of samples to be filled into the replay memory before updating the network')
     parser.add_argument('--train_freq', default=1, type=int, help='How often to update the Q-network')
     parser.add_argument('--batch_size', default=32, type=int, help='batch_size')
-    parser.add_argument('--num_iterations', default=50000, type=int, help="num of iterations to run for the training")
+    parser.add_argument('--num_iterations', default=100000, type=int, help="num of iterations to run for the training")
     parser.add_argument('--max_episode_length', default=10000, type=int, help='max length of one episode')
     parser.add_argument('--lr', default=0.0001, type=float, help='learning rate')
     parser.add_argument('--epsilon', default=0.05, type=float, help='epsilon for exploration')
     parser.add_argument('--experiment_id', default=None, type=int, help='index of experiment to reload checkpoint')
     parser.add_argument('--save_freq', default=10000, type=int, help='checkpoint saving frequency')
     parser.add_argument('--evaluate_freq', default=10000, type=int, help='frequency to do evaluation and record video by wrapper')
-    parser.add_argument('--test_num_episodes', default=20, type=int, help='number of episodes to play at each evaluation')
+    parser.add_argument('--test_num_episodes', default=10, type=int, help='number of episodes to play at each evaluation')
 
     args = parser.parse_args()
 
@@ -120,6 +120,11 @@ def main():  # noqa: D103
         args.output = get_output_folder(args.output, args.env)
     else:
         args.output = os.path.join(args.output, args.env) + '-run{}'.format(args.experiment_id)
+    # print(args.output)
+    # if not os.path.exists('./'+args.output):
+    #     print("create folder")
+    #     print(args.output)
+    #     os.mkdir(args.output)
     game_env = gym.make(args.env)
     num_actions = game_env.action_space.n
     input_shape=(84, 84)

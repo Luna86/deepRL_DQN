@@ -82,7 +82,7 @@ class ExperienceReplayMemory(ReplayMemory):
         # print(indexes)
         for j in range(indexes.size):
             i = indexes[j][0]
-            print(i)
+            # print(i)
             m = self.buffer[i]
             action = m.action
             reward = m.reward
