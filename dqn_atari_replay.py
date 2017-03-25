@@ -17,7 +17,7 @@ from deeprl_hw2.dqn_replay import DQNAgent
 from deeprl_hw2.objectives import mean_huber_loss
 from deeprl_hw2.preprocessors import *
 from deeprl_hw2.policy import *
-from deeprl_hw2.experience import ExperienceReplayMemory
+from deeprl_hw2.simple_memory import SimpleReplayMemory
 
 
 def create_model(window, input_shape, num_actions,
@@ -109,7 +109,7 @@ def get_output_folder(parent_dir, env_name):
 
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on given game environment')
-    parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
+    parser.add_argument('--env', default='Enduro-v0', help='Atari env name')
     # parser.add_argument('--env', default='Pong-v0', help='Atari env name')
 
     parser.add_argument(
@@ -118,7 +118,7 @@ def main():  # noqa: D103
     parser.add_argument('--gamma', default=0.99, type=float, help='Discount factor')
     parser.add_argument('--target_update_freq', default=10000, type=int, help='interval between two updates of the target network')
     parser.add_argument('--num_burn_in', default=10000, type=int, help='number of samples to be filled into the replay memory before updating the network')
-    parser.add_argument('--train_freq', default=1, type=int, help='How often to update the Q-network')
+    parser.add_argument('--train_freq', default=4, type=int, help='How often to update the Q-network')
     parser.add_argument('--batch_size', default=32, type=int, help='batch_size')
     parser.add_argument('--num_iterations', default=50000, type=int, help="num of iterations to run for the training")
     parser.add_argument('--max_episode_length', default=10000, type=int, help='max length of one episode')
@@ -157,7 +157,7 @@ def main():  # noqa: D103
     preprocessor = PreprocessorSequence([atari_preprocessor, history_preprocessor])
 
     #setup memory
-    memory = ExperienceReplayMemory(max_size=100000, window_length=4)
+    memory = SimpleReplayMemory(max_size=100000, window_length=4)
     #setup policy
     # policy = UniformRandomPolicy(num_actions=num_actions)
     # policy = GreedyEpsilonPolicy(epsilon=args.epsilon, num_actions=num_actions)

@@ -102,6 +102,8 @@ class DQNAgent:
         self.input = self.model.inputs[0]
         self.y_true = tf.placeholder(tf.float32, shape=self.y_pred.get_shape(), name='y_true')
         self.mask = tf.placeholder(tf.float32, self.y_pred.get_shape(), name="mask")
+        self.y_pred_target = self.model_target.outputs[0]
+        self.input_target = self.model_target.inputs[0]
 
         self.loss = self.loss_func(self.y_true, tf.multiply(self.y_pred, self.mask))
 
@@ -138,8 +140,7 @@ class DQNAgent:
         # copy model
 
         self.model_target.set_weights(self.model.get_weights())
-        self.y_pred_target = self.model_target.outputs[0]
-        self.input_target = self.model_target.inputs[0]
+
 
 
 
@@ -241,7 +242,7 @@ class DQNAgent:
           How long a single episode should last before the agent
           resets. Can help exploration.
         """
-
+        # init monitor for testing
         state = env.reset()
         iter_epi = 0
         for i in range(num_iterations):
@@ -270,7 +271,7 @@ class DQNAgent:
                 self.preprocessor.reset()
                 continue
 
-            if i>self.num_burn_in:
+            if i>self.num_burn_in and i%self.train_freq==0:
                 batch = self.memory.sample(self.batch_size)
                 # print(batch["next_state"].shape)
                 next_q_value = self.calc_target_q_values(batch["next_state"])
@@ -299,7 +300,7 @@ class DQNAgent:
                 # update target policy
                 if i % self.target_update_freq == 0:
                     self.model_target.set_weights(self.model.get_weights())
-                    # self.sess.run(self.init_op)
+
 
 
 
@@ -341,8 +342,8 @@ class DQNAgent:
                 save_dir = os.path.join(self.logdir, 'checkpoints', str(i))
                 self.model.save_weights(save_dir)
                 print("Saving model at {0}".format(save_dir))
-            if i > 0 and i % self.evaluate_freq == 0:
-                average_test_reward = self.evaluate(env=gym.make('SpaceInvaders-v0'),
+            if i > 0 and i % self.evaluate_freq == 0 and i>self.num_burn_in:
+                average_test_reward = self.evaluate(env=gym.make('Enduro-v0'),
                                                     num_episodes=self.test_num_episodes, iter=i)
                 print('Evaluation at iter {0}: average reward for 20 episodes: {1}'.format(i, average_test_reward))
 
@@ -380,6 +381,7 @@ class DQNAgent:
                 total_reward += reward
                 state = next_state
                 env.render()
+            print(total_reward)
         average_reward = total_reward / num_episodes
         self.sess.run(self.assign_reward_op, feed_dict={self.set_reward: average_reward})
         merged_r = self.sess.run(self.merged_r)
