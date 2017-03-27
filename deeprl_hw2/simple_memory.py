@@ -84,8 +84,8 @@ class SimpleReplayMemory(ReplayMemory):
                 i = np.random.randint(low=1, high=self.buffer.length-1)
             batch["next_state"][j] = self.buffer[i+1].state
             batch["state"][j] = self.buffer[i].state
-            batch["reward"][j] = self.buffer[i].action
-            batch["action"][j] = self.buffer[i].reward
+            batch["reward"][j] = self.buffer[i].reward
+            batch["action"][j] = self.buffer[i].action
             batch["is_terminal"][j] = self.buffer[i+1].is_terminal
 
         return batch

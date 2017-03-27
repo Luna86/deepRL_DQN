@@ -109,7 +109,7 @@ def get_output_folder(parent_dir, env_name):
 
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on given game environment')
-    parser.add_argument('--env', default='Enduro-v0', help='Atari env name')
+    parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
     # parser.add_argument('--env', default='Pong-v0', help='Atari env name')
 
     parser.add_argument(
@@ -117,17 +117,18 @@ def main():  # noqa: D103
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
     parser.add_argument('--gamma', default=0.99, type=float, help='Discount factor')
     parser.add_argument('--target_update_freq', default=10000, type=int, help='interval between two updates of the target network')
-    parser.add_argument('--num_burn_in', default=10000, type=int, help='number of samples to be filled into the replay memory before updating the network')
+    parser.add_argument('--num_burn_in', default=50000, type=int, help='number of samples to be filled into the replay memory before updating the network')
     parser.add_argument('--train_freq', default=4, type=int, help='How often to update the Q-network')
     parser.add_argument('--batch_size', default=32, type=int, help='batch_size')
     parser.add_argument('--num_iterations', default=50000, type=int, help="num of iterations to run for the training")
-    parser.add_argument('--max_episode_length', default=10000, type=int, help='max length of one episode')
+    parser.add_argument('--max_episode_length', default=1000000, type=int, help='max length of one episode')
     parser.add_argument('--lr', default=0.0001, type=float, help='learning rate')
     parser.add_argument('--epsilon', default=0.05, type=float, help='epsilon for exploration')
     parser.add_argument('--experiment_id', default=None, type=int, help='index of experiment to reload checkpoint')
-    parser.add_argument('--save_freq', default=10000, type=int, help='checkpoint saving frequency')
+    parser.add_argument('--save_freq', default=100000, type=int, help='checkpoint saving frequency')
     parser.add_argument('--evaluate_freq', default=10000, type=int, help='frequency to do evaluation and record video by wrapper')
     parser.add_argument('--test_num_episodes', default=10, type=int, help='number of episodes to play at each evaluation')
+
 
     args = parser.parse_args()
 
@@ -155,19 +156,20 @@ def main():  # noqa: D103
     atari_preprocessor = AtariPreprocessor(input_shape)
     history_preprocessor = HistoryPreprocessor(history_length=3)
     preprocessor = PreprocessorSequence([atari_preprocessor, history_preprocessor])
-
+    test_preprocessor = PreprocessorSequence([AtariPreprocessor(input_shape), HistoryPreprocessor(history_length=3)])
     #setup memory
-    memory = SimpleReplayMemory(max_size=100000, window_length=4)
+    memory = SimpleReplayMemory(max_size=500000, window_length=4)
     #setup policy
     # policy = UniformRandomPolicy(num_actions=num_actions)
     # policy = GreedyEpsilonPolicy(epsilon=args.epsilon, num_actions=num_actions)
     policy = LinearDecayGreedyEpsilonPolicy(num_actions=num_actions,
                                             decay=0.9,
                                             start_value=1,
-                                            end_value=0.05,
-                                            num_steps=100000)
+                                            end_value=0.1,
+                                            num_steps=1000000)
     #setup DQN agent
-    agent = DQNAgent(q_network=model, q_target_network=model_target, preprocessor=preprocessor, memory=memory, policy=policy, gamma=args.gamma, target_update_freq=args.target_update_freq,
+    agent = DQNAgent(q_network=model, q_target_network=model_target, preprocessor=preprocessor, test_preprocessor=test_preprocessor,
+                     memory=memory, policy=policy, gamma=args.gamma, target_update_freq=args.target_update_freq,
                      num_burn_in=args.num_burn_in, train_freq=args.train_freq, batch_size=args.batch_size, logdir=args.output, save_freq=args.save_freq,
                      evaluate_freq=args.evaluate_freq, test_num_episodes=args.test_num_episodes)
     agent.compile(optimizer=optimizer, loss_func=mean_huber_loss)

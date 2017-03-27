@@ -146,6 +146,36 @@ class LinearDecayGreedyEpsilonPolicy(Policy):
         self.epsilon = self.start_value
         pass
 
+    # def select_action(self, q_values, is_training):
+    #     """Decay parameter and select action.
+    #
+    #     Parameters
+    #     ----------
+    #     q_values: np.array
+    #       The Q-values for each action.
+    #     is_training: bool, optional
+    #       If true then parameter will be decayed. Defaults to true.
+    #
+    #     Returns
+    #     -------
+    #     Any:
+    #       Selected action.
+    #     """
+    #     if is_training:
+    #         self.iter_num = self.iter_num+1
+    #         if self.iter_num % self.num_steps == 0:
+    #             self.epsilon = max(self.epsilon*self.decay, self.end_value)
+    #         rand = np.random.rand()
+    #         if rand < self.epsilon:
+    #             action = np.random.randint(0, self.num_actions)
+    #         else:
+    #             action = np.argmax(q_values)
+    #         return action
+    #     else:
+    #         return np.argmax(q_values)
+    #
+    #     pass
+
     def select_action(self, q_values, is_training):
         """Decay parameter and select action.
 
@@ -161,20 +191,23 @@ class LinearDecayGreedyEpsilonPolicy(Policy):
         Any:
           Selected action.
         """
+        # if phase == 'burn_in':
+        #     return np.random.randint(0, self.num_actions)
+
         if is_training:
-            self.iter_num = self.iter_num+1
-            if self.iter_num % self.num_steps == 0:
-                self.epsilon = max(self.epsilon*self.decay, self.end_value)
+            self.epsilon = max(self.end_value, (self.start_value - (self.start_value - self.end_value) / self.num_steps) * self.iter_num)
             rand = np.random.rand()
             if rand < self.epsilon:
                 action = np.random.randint(0, self.num_actions)
             else:
                 action = np.argmax(q_values)
+            self.iter_num = self.iter_num+1
             return action
         else:
             return np.argmax(q_values)
 
-        pass
+
+
 
     def reset(self):
         """Start the decay over at the start value."""

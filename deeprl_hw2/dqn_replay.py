@@ -5,6 +5,8 @@ import os
 import time
 import numpy as np
 from gym import wrappers
+from PIL import Image
+
 from keras.models import Model
 import tensorflow as tf
 
@@ -52,6 +54,7 @@ class DQNAgent:
                  q_network,
                  q_target_network,
                  preprocessor,
+                 test_preprocessor,
                  memory,
                  policy,
                  gamma,
@@ -66,6 +69,7 @@ class DQNAgent:
         self.model = q_network
         self.model_target = q_target_network
         self.preprocessor = preprocessor
+        self.test_preprocessor = test_preprocessor
         self.memory = memory
         self.policy = policy
         self.gamma = gamma
@@ -95,7 +99,15 @@ class DQNAgent:
         keras.optimizers.Optimizer class. Specifically the Adam
         optimizer.
         """
-        self.sess = tf.Session()
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        # config.log_device_placement = True
+        config.allow_soft_placement = True
+
+        # with tf.Session(config=config) as sess:
+
+        self.sess = tf.Session(config=config)
+
         self.optimizer = optimizer
         self.loss_func = loss_func
         self.y_pred = self.model.outputs[0]
@@ -129,7 +141,7 @@ class DQNAgent:
             last_iter = 0
             for past_iter in os.listdir(ckpt_dir):
                 if int(past_iter) > last_iter:
-                    last_iter = past_iter
+                    last_iter = int(past_iter)
             self.model.load_weights(filepath=os.path.join(ckpt_dir, str(last_iter)))
             # self.sess.run(self.init_op)
             print("Restore model from {0}".format(os.path.join(ckpt_dir, str(last_iter))))
@@ -245,6 +257,27 @@ class DQNAgent:
         # init monitor for testing
         state = env.reset()
         iter_epi = 0
+        print("burn in ....")
+        for i in range(self.num_burn_in):
+            processed_state = self.preprocessor.process_state_for_network(state)
+            action = np.random.randint(0, self.policy.num_actions)
+            next_state, reward, is_terminal, debug_info = env.step(action)
+            reward = self.preprocessor.process_reward(reward)
+            if iter_epi > 3:
+                self.memory.append(state=processed_state.astype(np.uint8), action=action, reward=reward)
+
+            if is_terminal or iter_epi >= max_episode_length:
+                print('game ends! reset now.')
+                processed_next_state = self.preprocessor.process_state_for_network(next_state)
+                self.memory.end_episode(processed_next_state, is_terminal)
+                state = env.reset()
+                iter_epi = 0
+                self.preprocessor.reset()
+                continue
+            if i % (self.num_burn_in / 10) == 0:
+                print("Burn in : {0}% done".format(i / self.num_burn_in))
+            iter_epi = iter_epi+1
+
         for i in range(num_iterations):
             start_time = time.time()
             # if iter_epi >= max_episode_length:
@@ -253,14 +286,22 @@ class DQNAgent:
             #     self.preprocessor.reset()
 
             processed_state = self.preprocessor.process_state_for_network(state)
+            # for k in range(4):
+            #     im = Image.fromarray(processed_state[:,:,k])
+            #     im.show(title="debug")
+
+                # im.show()
+            # select action
             q_values = self.calc_q_values(np.expand_dims(processed_state, axis=0))
             action = self.select_action_train(q_values)
+            # print(action)
 
             next_state, reward, is_terminal, debug_info = env.step(action)
             # env.render()
             reward = self.preprocessor.process_reward(reward)
             # todo put into memory
-            self.memory.append(state=processed_state.astype(np.uint8), action=action, reward=reward)
+            if iter_epi>3:
+                self.memory.append(state=processed_state.astype(np.uint8), action=action, reward=reward)
 
             if is_terminal or iter_epi >= max_episode_length:
                 print('game ends! reset now.')
@@ -271,7 +312,7 @@ class DQNAgent:
                 self.preprocessor.reset()
                 continue
 
-            if i>self.num_burn_in and i%self.train_freq==0:
+            if i%self.train_freq==0:
                 batch = self.memory.sample(self.batch_size)
                 # print(batch["next_state"].shape)
                 next_q_value = self.calc_target_q_values(batch["next_state"])
@@ -288,20 +329,23 @@ class DQNAgent:
                 # print(next_q_value)
 
                 target = batch["reward"]+self.gamma*np.multiply(1-batch["is_terminal"], next_q_value.max(axis=1))
+                # print(target)
                 q_values_target = np.zeros([self.batch_size, env.action_space.n])
                 for x in range(self.batch_size):
                     q_values_target[x,batch["action"][x]] = target[x]
+                # print(batch["action"])
+                # print(q_values_target)
 
                 loss_summary, loss, _ = self.sess.run([self.loss_summary, self.loss, self.train_op],
                                                         feed_dict={self.y_true: q_values_target,
                                                              self.input: batch["state"],
                                                              self.mask: mask})
                 self.file_writer.add_summary(loss_summary, i)
-                # update target policy
-                if i % self.target_update_freq == 0:
-                    self.model_target.set_weights(self.model.get_weights())
+            # update target policy
+            if i % self.target_update_freq == 0:
+                self.model_target.set_weights(self.model.get_weights())
 
-
+            iter_epi = iter_epi+1
 
 
             duration = time.time() - start_time
@@ -325,7 +369,7 @@ class DQNAgent:
             #                                                  self.y_pred: np.expand_dims(q_values, axis=0),
             #                                                  self.input: np.expand_dims(processed_state, axis=0)})
             # duration = time.time() - start_time
-            if i % 50 == 0 and i>self.num_burn_in:
+            if i % 50 == 0:
                 # print('max next q:{0}'.format(max(next_q_value)))
                 # print('target:{0}'.format(target))
                 # print('reward: {0}'.format(reward))
@@ -335,15 +379,15 @@ class DQNAgent:
                 print('q_values: {0}'.format(q_values))
                 # print('q_values - q_target: {0}'.format(max(abs(q_values - q_values_target))))
                 print('iter= {0}, loss = {1:.4f}, ({2:.2f} sec/iter)'.format(i, loss, duration))
-                print()
                 # reward_summary = self.sess.run([self.reward_summary], feed_dict={self.test_reward: average_test_reward})
                 # self.file_writer.add_summary(reward_summary, i)
             if i > 0 and i % self.save_freq == 0:
                 save_dir = os.path.join(self.logdir, 'checkpoints', str(i))
                 self.model.save_weights(save_dir)
                 print("Saving model at {0}".format(save_dir))
-            if i > 0 and i % self.evaluate_freq == 0 and i>self.num_burn_in:
-                average_test_reward = self.evaluate(env=gym.make('Enduro-v0'),
+            if i > 0 and i % self.evaluate_freq == 0:
+
+                average_test_reward = self.evaluate(env=gym.make('SpaceInvaders-v0'),
                                                     num_episodes=self.test_num_episodes, iter=i)
                 print('Evaluation at iter {0}: average reward for 20 episodes: {1}'.format(i, average_test_reward))
 
@@ -372,15 +416,19 @@ class DQNAgent:
         total_reward = 0
         for i in range(num_episodes):
             state = env.reset()
+            self.test_preprocessor.reset()
             is_terminal = 0
             while not is_terminal:
-                processed_state = self.preprocessor.process_state_for_network(state)
+                processed_state = self.test_preprocessor.process_state_for_network(state)
                 q_values = self.calc_q_values(np.expand_dims(processed_state, axis=0))
+                print('q_values: {0}'.format(q_values))
                 action = self.select_action(q_values)
+                print('action: {0}'.format(action))
                 next_state, reward, is_terminal, debug_info = env.step(action)
                 total_reward += reward
                 state = next_state
-                env.render()
+                # env.render()
+            self.test_preprocessor.reset()
             print(total_reward)
         average_reward = total_reward / num_episodes
         self.sess.run(self.assign_reward_op, feed_dict={self.set_reward: average_reward})
