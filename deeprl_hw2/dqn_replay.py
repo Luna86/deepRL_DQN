@@ -65,7 +65,8 @@ class DQNAgent:
                  logdir,
                  save_freq,
                  evaluate_freq,
-                 test_num_episodes):
+                 test_num_episodes,
+                 env_name):
         self.model = q_network
         self.model_target = q_target_network
         self.preprocessor = preprocessor
@@ -81,6 +82,7 @@ class DQNAgent:
         self.save_freq = save_freq
         self.evaluate_freq = evaluate_freq
         self.test_num_episodes = test_num_episodes
+        self.env_name = env_name
 
     def compile(self, optimizer, loss_func):
         """Setup all of the TF graph variables/ops.
@@ -152,9 +154,6 @@ class DQNAgent:
         # copy model
 
         self.model_target.set_weights(self.model.get_weights())
-
-
-
 
 
 
@@ -277,6 +276,8 @@ class DQNAgent:
             if i % (self.num_burn_in / 10) == 0:
                 print("Burn in : {0}% done".format(i / self.num_burn_in))
             iter_epi = iter_epi+1
+            state = next_state
+
 
         for i in range(num_iterations):
             start_time = time.time()
@@ -297,16 +298,22 @@ class DQNAgent:
             # print(action)
 
             next_state, reward, is_terminal, debug_info = env.step(action)
+            if reward > 0 or reward<0:
+                print('reward: {0}'.format(reward))
             # env.render()
             reward = self.preprocessor.process_reward(reward)
             # todo put into memory
             if iter_epi>3:
                 self.memory.append(state=processed_state.astype(np.uint8), action=action, reward=reward)
+                # for k in range(4):
+                #     im = Image.fromarray(processed_state.astype(np.uint8)[:,:,k])
+                #     im.show()
+                # return
 
             if is_terminal or iter_epi >= max_episode_length:
                 print('game ends! reset now.')
                 processed_next_state = self.preprocessor.process_state_for_network(next_state)
-                self.memory.end_episode(processed_next_state, is_terminal)
+                self.memory.end_episode(final_state=processed_next_state, is_terminal=is_terminal)
                 state = env.reset()
                 iter_epi = 0
                 self.preprocessor.reset()
@@ -314,6 +321,15 @@ class DQNAgent:
 
             if i%self.train_freq==0:
                 batch = self.memory.sample(self.batch_size)
+
+                # print(batch["reward"])
+                # print(batch["action"])
+                # print(batch["is_terminal"])
+
+                # for k in range(32):
+                #     im = Image.fromarray(np.array(batch["state"][k, :, :, 3], dtype=np.uint8))
+                #     im.show()
+                # return
                 # print(batch["next_state"].shape)
                 next_q_value = self.calc_target_q_values(batch["next_state"])
                 mask = np.zeros([self.batch_size, env.action_space.n])
@@ -376,6 +392,7 @@ class DQNAgent:
                 # print('q_values - next_q_values: {0}'.format(max(abs(q_values - next_q_value))))
                 # print('action:{0}'.format(action))
                 # print('q_target: {0}'.format(q_values_target))
+                # print('reward: {0}'.format(reward))
                 print('q_values: {0}'.format(q_values))
                 # print('q_values - q_target: {0}'.format(max(abs(q_values - q_values_target))))
                 print('iter= {0}, loss = {1:.4f}, ({2:.2f} sec/iter)'.format(i, loss, duration))
@@ -387,7 +404,7 @@ class DQNAgent:
                 print("Saving model at {0}".format(save_dir))
             if i > 0 and i % self.evaluate_freq == 0:
 
-                average_test_reward = self.evaluate(env=gym.make('SpaceInvaders-v0'),
+                average_test_reward = self.evaluate(env=gym.make(self.env_name),
                                                     num_episodes=self.test_num_episodes, iter=i)
                 print('Evaluation at iter {0}: average reward for 20 episodes: {1}'.format(i, average_test_reward))
 

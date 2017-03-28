@@ -196,6 +196,9 @@ class LinearDecayGreedyEpsilonPolicy(Policy):
 
         if is_training:
             self.epsilon = max(self.end_value,  self.start_value -((self.start_value - self.end_value)/self.num_steps)*self.iter_num)
+            if self.iter_num%50 ==0:
+                print('epsilon: {0}'.format(self.epsilon))
+            # print(self.iter_num)
             rand = np.random.rand()
             if rand < self.epsilon:
                 action = np.random.randint(0, self.num_actions)

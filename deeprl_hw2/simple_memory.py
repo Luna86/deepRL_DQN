@@ -1,5 +1,6 @@
 from deeprl_hw2.core import ReplayMemory
 import numpy as np
+from PIL import Image
 
 class Sample:
     def __init__(self, state, action, reward, is_terminal):
@@ -78,15 +79,28 @@ class SimpleReplayMemory(ReplayMemory):
         # if indexes==None:
         indexes = np.random.randint(low=1, high=self.buffer.length-1, size=[batch_size,1])
         # print(indexes)
+
         for j in range(indexes.size):
             i = indexes[j][0]
+
+
             while i ==self.buffer.tail_idx() or self.buffer[i].is_terminal == 1:
+                print('resample')
                 i = np.random.randint(low=1, high=self.buffer.length-1)
-            batch["next_state"][j] = self.buffer[i+1].state
-            batch["state"][j] = self.buffer[i].state
+            batch["next_state"][j,:,:,:] = self.buffer[i+1].state
+            batch["state"][j,:,:,:] = self.buffer[i].state
             batch["reward"][j] = self.buffer[i].reward
             batch["action"][j] = self.buffer[i].action
             batch["is_terminal"][j] = self.buffer[i+1].is_terminal
+
+        # for k in range(batch_size):
+        #     im = Image.fromarray(np.array(batch["state"][k, :, :, 3], dtype=np.uint8))
+        #     im.show()
+
+        # for k in range(32):
+        #     im = Image.fromarray(np.array(batch["next_state"][k, :, :, 3], dtype=np.uint8))
+        #     im.show()
+
 
         return batch
 

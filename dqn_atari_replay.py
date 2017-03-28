@@ -109,8 +109,8 @@ def get_output_folder(parent_dir, env_name):
 
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on given game environment')
-    parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
-    # parser.add_argument('--env', default='Pong-v0', help='Atari env name')
+    # parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
+    parser.add_argument('--env', default='Pong-v0', help='Atari env name')
 
     parser.add_argument(
         '-o', '--output', default='train', help='Directory to save data to')
@@ -118,7 +118,7 @@ def main():  # noqa: D103
     parser.add_argument('--gamma', default=0.99, type=float, help='Discount factor')
     parser.add_argument('--target_update_freq', default=10000, type=int, help='interval between two updates of the target network')
     parser.add_argument('--num_burn_in', default=50000, type=int, help='number of samples to be filled into the replay memory before updating the network')
-    parser.add_argument('--train_freq', default=4, type=int, help='How often to update the Q-network')
+    parser.add_argument('--train_freq', default=1, type=int, help='How often to update the Q-network')
     parser.add_argument('--batch_size', default=32, type=int, help='batch_size')
     parser.add_argument('--num_iterations', default=50000, type=int, help="num of iterations to run for the training")
     parser.add_argument('--max_episode_length', default=1000000, type=int, help='max length of one episode')
@@ -171,7 +171,7 @@ def main():  # noqa: D103
     agent = DQNAgent(q_network=model, q_target_network=model_target, preprocessor=preprocessor, test_preprocessor=test_preprocessor,
                      memory=memory, policy=policy, gamma=args.gamma, target_update_freq=args.target_update_freq,
                      num_burn_in=args.num_burn_in, train_freq=args.train_freq, batch_size=args.batch_size, logdir=args.output, save_freq=args.save_freq,
-                     evaluate_freq=args.evaluate_freq, test_num_episodes=args.test_num_episodes)
+                     evaluate_freq=args.evaluate_freq, test_num_episodes=args.test_num_episodes, env_name=args.env)
     agent.compile(optimizer=optimizer, loss_func=mean_huber_loss)
     agent.fit(env=game_env, num_iterations=args.num_iterations, max_episode_length=args.max_episode_length)
 
