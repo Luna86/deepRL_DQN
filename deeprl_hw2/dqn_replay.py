@@ -171,6 +171,8 @@ class DQNAgent:
         self.merged_r = tf.summary.merge([self.r_summary])
         self.file_writer = tf.summary.FileWriter(self.logdir)
 
+        self.model_saver = tf.train.Saver(self.model.trainable_weights)
+
         self.sess.run(self.init_op)
         print("compile finished")
 
@@ -361,8 +363,9 @@ class DQNAgent:
                 print('iter= {0}, loss = {1:.4f}, ({2:.2f} sec/iter)'.format(i, loss, duration))
             if i > 0 and i % self.save_freq == 0:
                 save_dir = os.path.join(self.logdir, 'checkpoints', str(i))
-                self.model.save_weights(save_dir)
-                print("Saving model at {0}".format(save_dir))
+                # self.model.save_weights(save_dir)
+                save_path = self.model_saver.save(self.sess, save_dir)
+                print("Saving model at {0}".format(save_path))
             if i > 0 and i % self.evaluate_freq == 0:
 
                 average_test_reward = self.evaluate(env=gym.make(self.env_name),
