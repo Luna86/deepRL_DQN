@@ -308,7 +308,7 @@ class DQNAgent:
             # if i>4:
             #     q_values0 = self.calc_target_q_values(np.expand_dims(first_state / 255, axis=0))
             #     print(q_values0)
-            q_values = self.calc_q_values(np.expand_dims(processed_state, axis=0))
+            q_values = self.calc_q_values(np.expand_dims(processed_state/255, axis=0))
             action = self.select_action_train(q_values)
             # print(action)
 
@@ -336,7 +336,7 @@ class DQNAgent:
 
             if i%self.train_freq==0:
                 batch = self.memory.sample(self.batch_size)
-                next_q_value = self.calc_target_q_values(batch["next_state"])
+                next_q_value = self.calc_target_q_values(batch["next_state"]/255)
                 mask = np.zeros([self.batch_size, env.action_space.n])
                 for x in range(self.batch_size):
                     if batch["is_terminal"][x]==0:
@@ -349,7 +349,7 @@ class DQNAgent:
 
                 loss_summary, loss, _ = self.sess.run([self.loss_summary, self.loss, self.train_op],
                                                         feed_dict={self.y_true: q_values_target,
-                                                             self.input: batch["state"],
+                                                             self.input: batch["state"]/255,
                                                              self.mask: mask})
                 self.file_writer.add_summary(loss_summary, i)
             # update target policy
@@ -445,7 +445,7 @@ class DQNAgent:
             is_terminal = 0
             while not is_terminal:
                 processed_state = self.test_preprocessor.process_state_for_network(state)
-                q_values = self.calc_q_values(np.expand_dims(processed_state, axis=0))
+                q_values = self.calc_q_values(np.expand_dims(processed_state/255, axis=0))
                 # print('q_values: {0}'.format(q_values))
                 action = self.select_action(q_values)
                 # print('action: {0}'.format(action))
@@ -459,6 +459,7 @@ class DQNAgent:
         self.sess.run(self.assign_reward_op, feed_dict={self.set_reward: average_reward})
         merged_r = self.sess.run(self.merged_r)
         self.file_writer.add_summary(merged_r)
+        env.close()
         return average_reward
 
 
