@@ -3,9 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="6173fe3a-8adc-46ba-a576-5416a330f4e6" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/deeprl_hw2/dqn_replay.py" afterPath="$PROJECT_DIR$/deeprl_hw2/dqn_replay.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/deeprl_hw2/simple_memory.py" afterPath="$PROJECT_DIR$/deeprl_hw2/simple_memory.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/dqn_atari_replay.py" afterPath="$PROJECT_DIR$/dqn_atari_replay.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/train.sh" afterPath="$PROJECT_DIR$/train.sh" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -71,7 +68,7 @@
           <file leaf-file-name="experience.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/deeprl_hw2/experience.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="787">
+                <state relative-caret-position="757">
                   <caret line="94" column="60" lean-forward="false" selection-start-line="94" selection-start-column="60" selection-end-line="94" selection-end-column="60" />
                   <folding>
                     <element signature="e#0#40#0" expanded="true" />
@@ -84,7 +81,7 @@
             <entry file="file://$PROJECT_DIR$/deeprl_hw2/simple_memory.py">
               <provider selected="true" editor-type-id="text-editor">
                 <state relative-caret-position="262">
-                  <caret line="84" column="0" lean-forward="true" selection-start-line="84" selection-start-column="0" selection-end-line="84" selection-end-column="0" />
+                  <caret line="84" column="0" lean-forward="false" selection-start-line="84" selection-start-column="0" selection-end-line="84" selection-end-column="0" />
                   <folding>
                     <element signature="e#0#40#0" expanded="true" />
                   </folding>
@@ -147,8 +144,8 @@
           <file leaf-file-name="dqn_replay.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/deeprl_hw2/dqn_replay.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="145">
-                  <caret line="300" column="16" lean-forward="false" selection-start-line="300" selection-start-column="16" selection-end-line="300" selection-end-column="16" />
+                <state relative-caret-position="370">
+                  <caret line="443" column="42" lean-forward="true" selection-start-line="443" selection-start-column="42" selection-end-line="443" selection-end-column="42" />
                   <folding>
                     <element signature="e#22#35#0" expanded="true" />
                   </folding>
@@ -195,6 +192,7 @@
       <find>output</find>
       <find>test_num_episodes</find>
       <find>assign_reward_op</find>
+      <find>255</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -858,7 +856,7 @@
     <entry file="file://$PROJECT_DIR$/deeprl_hw2/simple_memory.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="262">
-          <caret line="84" column="0" lean-forward="true" selection-start-line="84" selection-start-column="0" selection-end-line="84" selection-end-column="0" />
+          <caret line="84" column="0" lean-forward="false" selection-start-line="84" selection-start-column="0" selection-end-line="84" selection-end-column="0" />
           <folding>
             <element signature="e#0#40#0" expanded="true" />
           </folding>
@@ -887,7 +885,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/deeprl_hw2/experience.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="787">
+        <state relative-caret-position="757">
           <caret line="94" column="60" lean-forward="false" selection-start-line="94" selection-start-column="60" selection-end-line="94" selection-end-column="60" />
           <folding>
             <element signature="e#0#40#0" expanded="true" />
@@ -897,8 +895,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/deeprl_hw2/dqn_replay.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="145">
-          <caret line="300" column="16" lean-forward="false" selection-start-line="300" selection-start-column="16" selection-end-line="300" selection-end-column="16" />
+        <state relative-caret-position="370">
+          <caret line="443" column="42" lean-forward="true" selection-start-line="443" selection-start-column="42" selection-end-line="443" selection-end-column="42" />
           <folding>
             <element signature="e#22#35#0" expanded="true" />
           </folding>
