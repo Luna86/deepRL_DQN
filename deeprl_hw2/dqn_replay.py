@@ -323,12 +323,7 @@ class DQNAgent:
                     if batch["is_terminal"][x]==0:
                         mask[x,batch["action"][x]] = 1
 
-                if self.model_name == "dqn" or self.model_name == "dueling_dqn":
-                    target = batch["reward"]+self.gamma*np.multiply(1-batch["is_terminal"], next_target_q_value.max(axis=1))
-                    q_values_target = np.zeros([self.batch_size, env.action_space.n])
-                    for x in range(self.batch_size):
-                        q_values_target[x,batch["action"][x]] = target[x]
-                elif self.model_name == "ddqn":
+                if self.model_name == "ddqn" or self.model_name == "linear_ddqn":
                     next_q_value = self.calc_q_values(batch["next_state"] / 255)
                     next_actions = np.argmax(next_q_value,1)
                     target_rewards = batch["reward"]
@@ -339,8 +334,11 @@ class DQNAgent:
                         q_values_target[x, batch["action"][x]] = target_rewards[x]
                         + self.gamma * (1-target_is_terminal[x]) * next_target_q_value[x,next_actions[x]]
                 else:
-                    print("unsupported model")
-                    return
+                    target = batch["reward"] + self.gamma * np.multiply(1 - batch["is_terminal"],
+                                                                        next_target_q_value.max(axis=1))
+                    q_values_target = np.zeros([self.batch_size, env.action_space.n])
+                    for x in range(self.batch_size):
+                        q_values_target[x, batch["action"][x]] = target[x]
 
                 loss_summary, loss, _ = self.sess.run([self.loss_summary, self.loss, self.train_op],
                                                         feed_dict={self.y_true: q_values_target,
@@ -412,7 +410,7 @@ class DQNAgent:
         average_reward = total_reward / num_episodes
         self.sess.run(self.assign_reward_op, feed_dict={self.set_reward: average_reward})
         merged_r = self.sess.run(self.merged_r)
-        self.file_writer.add_summary(merged_r)
+        self.file_writer.add_summary(merged_r, iter)
         env.close()
         return average_reward
 

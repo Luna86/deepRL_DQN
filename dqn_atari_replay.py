@@ -48,7 +48,7 @@ def create_model(window, input_shape, num_actions,
     """
     input_size = (input_shape[0], input_shape[1], window)
     #input_size = input_shape[0] * input_shape[1] * window
-    if model_name == "linear":
+    if model_name == "linear_dqn" or model_name == "linear_ddqn":
         with tf.name_scope(model_name):
             #input = Input(shape=(input_size,), batch_shape=None, name='input')
             input = Input(shape=input_size, batch_shape=None, name='input')
