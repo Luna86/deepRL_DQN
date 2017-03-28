@@ -85,7 +85,7 @@ class SimpleReplayMemory(ReplayMemory):
 
 
             while i ==self.buffer.tail_idx() or self.buffer[i].is_terminal == 1:
-                print('resample')
+                # print('resample')
                 i = np.random.randint(low=1, high=self.buffer.length-1)
             batch["next_state"][j,:,:,:] = self.buffer[i+1].state
             batch["state"][j,:,:,:] = self.buffer[i].state

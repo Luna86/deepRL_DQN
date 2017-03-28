@@ -109,8 +109,8 @@ def get_output_folder(parent_dir, env_name):
 
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on given game environment')
-    # parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
-    parser.add_argument('--env', default='Pong-v0', help='Atari env name')
+    parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
+    # parser.add_argument('--env', default='Pong-v0', help='Atari env name')
 
     parser.add_argument(
         '-o', '--output', default='train', help='Directory to save data to')

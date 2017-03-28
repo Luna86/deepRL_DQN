@@ -127,8 +127,18 @@ class DQNAgent:
 
         self.reward_record = tf.Variable(0., name='global_r', trainable=False, dtype=tf.float32)
         self.set_reward = tf.placeholder(tf.float32, shape=[])
+
         self.assign_reward_op = tf.assign(self.reward_record, self.set_reward)
 
+        self.sync_model_op = []
+        self.sync_model_input = []
+        for i in range(len(self.model.trainable_weights)):
+            self.sync_model_input.append(tf.placeholder('float32', self.model.trainable_weights[i].get_shape().as_list()))
+            self.sync_model_op.append(self.model_target.trainable_weights[i].assign(self.sync_model_input[i]))
+
+        # self.syn_model_op = (self.model_target.trainable_weights, self.model.trainable_weights)
+        print('(((((((((()))))))))')
+        print(self.model.trainable_weights)
         # init Q-network
         # check if checkpoint exists
         if not os.path.exists(self.logdir):
@@ -279,7 +289,7 @@ class DQNAgent:
             state = next_state
 
 
-        for i in range(num_iterations):
+        for i in range(1,num_iterations):
             start_time = time.time()
             # if iter_epi >= max_episode_length:
             #     iter_epi = 0
@@ -292,8 +302,13 @@ class DQNAgent:
             #     im.show(title="debug")
 
                 # im.show()
+            # if i==4:
+            #     first_state = processed_state
             # select action
-            q_values = self.calc_q_values(np.expand_dims(processed_state, axis=0))
+            # if i>4:
+            #     q_values0 = self.calc_target_q_values(np.expand_dims(first_state / 255, axis=0))
+            #     print(q_values0)
+            q_values = self.calc_q_values(np.expand_dims(processed_state/255, axis=0))
             action = self.select_action_train(q_values)
             # print(action)
 
@@ -321,45 +336,38 @@ class DQNAgent:
 
             if i%self.train_freq==0:
                 batch = self.memory.sample(self.batch_size)
-
-                # print(batch["reward"])
-                # print(batch["action"])
-                # print(batch["is_terminal"])
-
-                # for k in range(32):
-                #     im = Image.fromarray(np.array(batch["state"][k, :, :, 3], dtype=np.uint8))
-                #     im.show()
-                # return
-                # print(batch["next_state"].shape)
-                next_q_value = self.calc_target_q_values(batch["next_state"])
+                next_q_value = self.calc_target_q_values(batch["next_state"]/255)
                 mask = np.zeros([self.batch_size, env.action_space.n])
-                # print(batch["is_terminal"])
-                # print(batch["action"])
-                # print(batch["reward"])
                 for x in range(self.batch_size):
-                    # print(batch["is_terminal"][x])
                     if batch["is_terminal"][x]==0:
-                        # print(batch["action"][x])
                         mask[x,batch["action"][x]] = 1
 
-                # print(next_q_value)
-
                 target = batch["reward"]+self.gamma*np.multiply(1-batch["is_terminal"], next_q_value.max(axis=1))
-                # print(target)
                 q_values_target = np.zeros([self.batch_size, env.action_space.n])
                 for x in range(self.batch_size):
                     q_values_target[x,batch["action"][x]] = target[x]
-                # print(batch["action"])
-                # print(q_values_target)
 
                 loss_summary, loss, _ = self.sess.run([self.loss_summary, self.loss, self.train_op],
                                                         feed_dict={self.y_true: q_values_target,
-                                                             self.input: batch["state"],
+                                                             self.input: batch["state"]/255,
                                                              self.mask: mask})
                 self.file_writer.add_summary(loss_summary, i)
             # update target policy
             if i % self.target_update_freq == 0:
-                self.model_target.set_weights(self.model.get_weights())
+                print("update model")
+                # print(self.model_target.get_weights()[2][1])
+                for k in range(len(self.model.trainable_weights)):
+                    self.sync_model_op[k].eval(session=self.sess, feed_dict={self.sync_model_input[k]: self.model.trainable_weights[k].eval(session=self.sess)})
+                # self.sess.run(self.model_target.set_weights(self.model.get_weights()))
+
+                # print("new model")
+                # print(self.model_target.get_weights()[2][1])
+                #
+                # print("example model")
+                # print(self.model.get_weights()[2][1])
+
+
+
 
             iter_epi = iter_epi+1
 
@@ -437,10 +445,10 @@ class DQNAgent:
             is_terminal = 0
             while not is_terminal:
                 processed_state = self.test_preprocessor.process_state_for_network(state)
-                q_values = self.calc_q_values(np.expand_dims(processed_state, axis=0))
-                print('q_values: {0}'.format(q_values))
+                q_values = self.calc_q_values(np.expand_dims(processed_state/255, axis=0))
+                # print('q_values: {0}'.format(q_values))
                 action = self.select_action(q_values)
-                print('action: {0}'.format(action))
+                # print('action: {0}'.format(action))
                 next_state, reward, is_terminal, debug_info = env.step(action)
                 total_reward += reward
                 state = next_state
@@ -452,3 +460,5 @@ class DQNAgent:
         merged_r = self.sess.run(self.merged_r)
         self.file_writer.add_summary(merged_r)
         return average_reward
+
+
