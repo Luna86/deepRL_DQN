@@ -8,8 +8,9 @@ import gym
 import numpy as np
 import tensorflow as tf
 from keras.layers import (Activation, Convolution2D, Dense, Flatten, Input, Conv2D,
-                          Permute)
+                          Permute, Lambda)
 from keras.models import Model
+import keras.backend as K
 from keras.optimizers import Adam
 
 import deeprl_hw2 as tfrl
@@ -47,15 +48,15 @@ def create_model(window, input_shape, num_actions,
     """
     input_size = (input_shape[0], input_shape[1], window)
     #input_size = input_shape[0] * input_shape[1] * window
-    if model_name == "linear_model":
+    if model_name == "linear":
         with tf.name_scope(model_name):
             #input = Input(shape=(input_size,), batch_shape=None, name='input')
             input = Input(shape=input_size, batch_shape=None, name='input')
             flat_input = Flatten()(input)
             with tf.name_scope('output'):
                 output = Dense(num_actions, activation=None)(flat_input)
-    else:
-        print("create deep model")
+    elif model_name == "dqn" or model_name == "ddqn":
+        print("create dqn model")
         with tf.name_scope(model_name):
             # input = Input(shape=(input_size,), batch_shape=None, name='input')
             input = Input(shape=input_size, batch_shape=None, name='input')
@@ -65,6 +66,19 @@ def create_model(window, input_shape, num_actions,
             h3 = Dense(256, activation="relu")(flat_conv2)
             with tf.name_scope('output'):
                 output = Dense(num_actions, activation=None)(h3)
+    elif model_name == "dueling_dqn":
+        print("create dueling dqn model")
+        with tf.name_scope(model_name):
+            # input = Input(shape=(input_size,), batch_shape=None, name='input')
+            input = Input(shape=input_size, batch_shape=None, name='input')
+            conv1 = Conv2D(16, (8, 8), padding='same', strides=(4, 4), activation='relu')(input)
+            conv2 = Conv2D(32, (4, 4), padding='same', strides=(2, 2), activation='relu')(conv1)
+            flat_conv2 = Flatten()(conv2)
+            h3 = Dense(256, activation="relu")(flat_conv2)
+            with tf.name_scope('q_output'):
+                y = Dense(num_actions+1, activation=None)(h3)
+            output = Lambda(lambda a: K.expand_dims(a[:, 0], -1) + a[:, 1:] - K.mean(a[:, 1:], keepdims=True),
+                                 output_shape=(num_actions,))(y)
 
     model = Model(inputs=input, outputs=output)
     print(model.summary())
@@ -111,6 +125,8 @@ def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on given game environment')
     parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
     # parser.add_argument('--env', default='Pong-v0', help='Atari env name')
+    parser.add_argument('--model_name', default="dqn",
+                        help='model_name: dqn, ddqn, dueling_dqn')
 
     parser.add_argument(
         '-o', '--output', default='train', help='Directory to save data to')
@@ -130,6 +146,9 @@ def main():  # noqa: D103
     parser.add_argument('--test_num_episodes', default=10, type=int, help='number of episodes to play at each evaluation')
 
 
+    parser.add_argument('--memory_size', default=200000, type=int,
+                        help='replay memory size')
+
     args = parser.parse_args()
 
     if not args.experiment_id:
@@ -145,8 +164,8 @@ def main():  # noqa: D103
 
     #setup model
     model_name = "cnn"
-    model = create_model(window=4, input_shape=input_shape, num_actions=num_actions, model_name='cnn')
-    model_target = create_model(window=4, input_shape=input_shape, num_actions=num_actions, model_name='cnn')
+    model = create_model(window=4, input_shape=input_shape, num_actions=num_actions, model_name=args.model_name)
+    model_target = create_model(window=4, input_shape=input_shape, num_actions=num_actions, model_name=args.model_name)
 
     #setup optimizer
     #optimizer = Adam(lr=args.lr)
@@ -158,7 +177,7 @@ def main():  # noqa: D103
     preprocessor = PreprocessorSequence([atari_preprocessor, history_preprocessor])
     test_preprocessor = PreprocessorSequence([AtariPreprocessor(input_shape), HistoryPreprocessor(history_length=3)])
     #setup memory
-    memory = SimpleReplayMemory(max_size=500000, window_length=4)
+    memory = SimpleReplayMemory(max_size=args.memory_size, window_length=4)
     #setup policy
     # policy = UniformRandomPolicy(num_actions=num_actions)
     # policy = GreedyEpsilonPolicy(epsilon=args.epsilon, num_actions=num_actions)
@@ -171,7 +190,8 @@ def main():  # noqa: D103
     agent = DQNAgent(q_network=model, q_target_network=model_target, preprocessor=preprocessor, test_preprocessor=test_preprocessor,
                      memory=memory, policy=policy, gamma=args.gamma, target_update_freq=args.target_update_freq,
                      num_burn_in=args.num_burn_in, train_freq=args.train_freq, batch_size=args.batch_size, logdir=args.output, save_freq=args.save_freq,
-                     evaluate_freq=args.evaluate_freq, test_num_episodes=args.test_num_episodes, env_name=args.env)
+                     evaluate_freq=args.evaluate_freq, test_num_episodes=args.test_num_episodes, env_name=args.env,
+                     model_name = args.model_name)
     agent.compile(optimizer=optimizer, loss_func=mean_huber_loss)
     agent.fit(env=game_env, num_iterations=args.num_iterations, max_episode_length=args.max_episode_length)
 

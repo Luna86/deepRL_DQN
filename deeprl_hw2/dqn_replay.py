@@ -66,7 +66,8 @@ class DQNAgent:
                  save_freq,
                  evaluate_freq,
                  test_num_episodes,
-                 env_name):
+                 env_name,
+                 model_name):
         self.model = q_network
         self.model_target = q_target_network
         self.preprocessor = preprocessor
@@ -83,6 +84,7 @@ class DQNAgent:
         self.evaluate_freq = evaluate_freq
         self.test_num_episodes = test_num_episodes
         self.env_name = env_name
+        self.model_name = model_name
 
     def compile(self, optimizer, loss_func):
         """Setup all of the TF graph variables/ops.
@@ -136,9 +138,6 @@ class DQNAgent:
             self.sync_model_input.append(tf.placeholder('float32', self.model.trainable_weights[i].get_shape().as_list()))
             self.sync_model_op.append(self.model_target.trainable_weights[i].assign(self.sync_model_input[i]))
 
-        # self.syn_model_op = (self.model_target.trainable_weights, self.model.trainable_weights)
-        print('(((((((((()))))))))')
-        print(self.model.trainable_weights)
         # init Q-network
         # check if checkpoint exists
         if not os.path.exists(self.logdir):
@@ -158,9 +157,6 @@ class DQNAgent:
             # self.sess.run(self.init_op)
             print("Restore model from {0}".format(os.path.join(ckpt_dir, str(last_iter))))
 
-        # define target network
-        # config = self.model.get_config()
-        # self.model_target = Model.from_config(config=config)
         # copy model
 
         self.model_target.set_weights(self.model.get_weights())
@@ -291,26 +287,11 @@ class DQNAgent:
 
         for i in range(1,num_iterations):
             start_time = time.time()
-            # if iter_epi >= max_episode_length:
-            #     iter_epi = 0
-            #     state = env.reset()
-            #     self.preprocessor.reset()
 
             processed_state = self.preprocessor.process_state_for_network(state)
-            # for k in range(4):
-            #     im = Image.fromarray(processed_state[:,:,k])
-            #     im.show(title="debug")
 
-                # im.show()
-            # if i==4:
-            #     first_state = processed_state
-            # select action
-            # if i>4:
-            #     q_values0 = self.calc_target_q_values(np.expand_dims(first_state / 255, axis=0))
-            #     print(q_values0)
             q_values = self.calc_q_values(np.expand_dims(processed_state/255, axis=0))
             action = self.select_action_train(q_values)
-            # print(action)
 
             next_state, reward, is_terminal, debug_info = env.step(action)
             if reward > 0 or reward<0:
@@ -320,10 +301,6 @@ class DQNAgent:
             # todo put into memory
             if iter_epi>3:
                 self.memory.append(state=processed_state.astype(np.uint8), action=action, reward=reward)
-                # for k in range(4):
-                #     im = Image.fromarray(processed_state.astype(np.uint8)[:,:,k])
-                #     im.show()
-                # return
 
             if is_terminal or iter_epi >= max_episode_length:
                 print('game ends! reset now.')
@@ -336,16 +313,32 @@ class DQNAgent:
 
             if i%self.train_freq==0:
                 batch = self.memory.sample(self.batch_size)
-                next_q_value = self.calc_target_q_values(batch["next_state"]/255)
+
+                next_target_q_value = self.calc_target_q_values(batch["next_state"]/255)
+
                 mask = np.zeros([self.batch_size, env.action_space.n])
                 for x in range(self.batch_size):
                     if batch["is_terminal"][x]==0:
                         mask[x,batch["action"][x]] = 1
 
-                target = batch["reward"]+self.gamma*np.multiply(1-batch["is_terminal"], next_q_value.max(axis=1))
-                q_values_target = np.zeros([self.batch_size, env.action_space.n])
-                for x in range(self.batch_size):
-                    q_values_target[x,batch["action"][x]] = target[x]
+                if self.model_name == "dqn" or self.model_name == "dueling_dqn":
+                    target = batch["reward"]+self.gamma*np.multiply(1-batch["is_terminal"], next_target_q_value.max(axis=1))
+                    q_values_target = np.zeros([self.batch_size, env.action_space.n])
+                    for x in range(self.batch_size):
+                        q_values_target[x,batch["action"][x]] = target[x]
+                elif self.model_name == "ddqn":
+                    next_q_value = self.calc_q_values(batch["next_state"] / 255)
+                    next_actions = np.argmax(next_q_value,1)
+                    target_rewards = batch["reward"]
+                    target_is_terminal = batch["is_terminal"]
+                    q_values_target = np.zeros([self.batch_size, env.action_space.n])
+
+                    for x in range(self.batch_size):
+                        q_values_target[x, batch["action"][x]] = target_rewards[x]
+                        + self.gamma * (1-target_is_terminal[x]) * next_target_q_value[x,next_actions[x]]
+                else:
+                    print("unsupported model")
+                    return
 
                 loss_summary, loss, _ = self.sess.run([self.loss_summary, self.loss, self.train_op],
                                                         feed_dict={self.y_true: q_values_target,
@@ -358,54 +351,14 @@ class DQNAgent:
                 # print(self.model_target.get_weights()[2][1])
                 for k in range(len(self.model.trainable_weights)):
                     self.sync_model_op[k].eval(session=self.sess, feed_dict={self.sync_model_input[k]: self.model.trainable_weights[k].eval(session=self.sess)})
-                # self.sess.run(self.model_target.set_weights(self.model.get_weights()))
-
-                # print("new model")
-                # print(self.model_target.get_weights()[2][1])
-                #
-                # print("example model")
-                # print(self.model.get_weights()[2][1])
-
-
-
 
             iter_epi = iter_epi+1
-
-
             duration = time.time() - start_time
 
-
-
-
-
-            # processed_next_state = self.preprocessor.process_state_for_network(next_state)
-            # next_q_value = self.calc_q_values(processed_next_state)
-
-
-
-            # target: only different at chosen action
-            # target = reward + self.gamma * max(next_q_value)
-            # q_values_target = np.array(q_values)
-            # q_values_target[action] = target
-            #
-            # loss_summary, loss, _ = self.sess.run([self.loss_summary, self.loss, self.train_op],
-            #                                       feed_dict={self.y_true: np.expand_dims(q_values_target, axis=0),
-            #                                                  self.y_pred: np.expand_dims(q_values, axis=0),
-            #                                                  self.input: np.expand_dims(processed_state, axis=0)})
-            # duration = time.time() - start_time
             if i % 50 == 0:
-                # print('max next q:{0}'.format(max(next_q_value)))
-                # print('target:{0}'.format(target))
-                # print('reward: {0}'.format(reward))
-                # print('q_values - next_q_values: {0}'.format(max(abs(q_values - next_q_value))))
-                # print('action:{0}'.format(action))
-                # print('q_target: {0}'.format(q_values_target))
-                # print('reward: {0}'.format(reward))
                 print('q_values: {0}'.format(q_values))
                 # print('q_values - q_target: {0}'.format(max(abs(q_values - q_values_target))))
                 print('iter= {0}, loss = {1:.4f}, ({2:.2f} sec/iter)'.format(i, loss, duration))
-                # reward_summary = self.sess.run([self.reward_summary], feed_dict={self.test_reward: average_test_reward})
-                # self.file_writer.add_summary(reward_summary, i)
             if i > 0 and i % self.save_freq == 0:
                 save_dir = os.path.join(self.logdir, 'checkpoints', str(i))
                 self.model.save_weights(save_dir)
@@ -415,8 +368,6 @@ class DQNAgent:
                 average_test_reward = self.evaluate(env=gym.make(self.env_name),
                                                     num_episodes=self.test_num_episodes, iter=i)
                 print('Evaluation at iter {0}: average reward for 20 episodes: {1}'.format(i, average_test_reward))
-
-
             state = next_state
             iter_epi += 1
 
