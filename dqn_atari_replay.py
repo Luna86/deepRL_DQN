@@ -149,6 +149,9 @@ def main():  # noqa: D103
     parser.add_argument('--memory_size', default=200000, type=int,
                         help='replay memory size')
 
+    parser.add_argument('--z', default=255., type=float,
+                        help='normailize constant')
+
     args = parser.parse_args()
 
     if not args.experiment_id:
@@ -191,7 +194,7 @@ def main():  # noqa: D103
                      memory=memory, policy=policy, gamma=args.gamma, target_update_freq=args.target_update_freq,
                      num_burn_in=args.num_burn_in, train_freq=args.train_freq, batch_size=args.batch_size, logdir=args.output, save_freq=args.save_freq,
                      evaluate_freq=args.evaluate_freq, test_num_episodes=args.test_num_episodes, env_name=args.env,
-                     model_name = args.model_name)
+                     model_name = args.model_name, z=args.z)
     agent.compile(optimizer=optimizer, loss_func=mean_huber_loss)
     agent.fit(env=game_env, num_iterations=args.num_iterations, max_episode_length=args.max_episode_length)
 

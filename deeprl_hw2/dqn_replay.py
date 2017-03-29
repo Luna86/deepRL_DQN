@@ -67,7 +67,8 @@ class DQNAgent:
                  evaluate_freq,
                  test_num_episodes,
                  env_name,
-                 model_name):
+                 model_name,
+                 z):
         self.model = q_network
         self.model_target = q_target_network
         self.preprocessor = preprocessor
@@ -85,6 +86,8 @@ class DQNAgent:
         self.test_num_episodes = test_num_episodes
         self.env_name = env_name
         self.model_name = model_name
+        self.z = z
+
 
     def compile(self, optimizer, loss_func):
         """Setup all of the TF graph variables/ops.
@@ -292,7 +295,7 @@ class DQNAgent:
 
             processed_state = self.preprocessor.process_state_for_network(state)
 
-            q_values = self.calc_q_values(np.expand_dims(processed_state/255, axis=0))
+            q_values = self.calc_q_values(np.expand_dims(processed_state/self.z, axis=0))
             action = self.select_action_train(q_values)
 
             next_state, reward, is_terminal, debug_info = env.step(action)
@@ -316,7 +319,8 @@ class DQNAgent:
             if i%self.train_freq==0:
                 batch = self.memory.sample(self.batch_size)
 
-                next_target_q_value = self.calc_target_q_values(batch["next_state"]/255)
+                next_target_q_value = self.calc_target_q_values(batch["next_state"]/self.z)
+                # print(next_target_q_value)
 
                 mask = np.zeros([self.batch_size, env.action_space.n])
                 for x in range(self.batch_size):
@@ -324,15 +328,20 @@ class DQNAgent:
                         mask[x,batch["action"][x]] = 1
 
                 if self.model_name == "ddqn" or self.model_name == "linear_ddqn":
-                    next_q_value = self.calc_q_values(batch["next_state"] / 255)
+                    next_q_value = self.calc_q_values(batch["next_state"] / self.z)
                     next_actions = np.argmax(next_q_value,1)
+                    # print("next actions")
+                    # print(next_actions)
                     target_rewards = batch["reward"]
+                    # print(target_rewards)
                     target_is_terminal = batch["is_terminal"]
                     q_values_target = np.zeros([self.batch_size, env.action_space.n])
-
+                    # print("target values")
                     for x in range(self.batch_size):
-                        q_values_target[x, batch["action"][x]] = target_rewards[x]
-                        + self.gamma * (1-target_is_terminal[x]) * next_target_q_value[x,next_actions[x]]
+                        q_values_target[x, batch["action"][x]] = (target_rewards[x]
+                        + self.gamma * (1-target_is_terminal[x]) * next_target_q_value[x,next_actions[x]])
+                        # print(q_values_target[x, batch["action"][x]])
+
                 else:
                     target = batch["reward"] + self.gamma * np.multiply(1 - batch["is_terminal"],
                                                                         next_target_q_value.max(axis=1))
@@ -342,7 +351,7 @@ class DQNAgent:
 
                 loss_summary, loss, _ = self.sess.run([self.loss_summary, self.loss, self.train_op],
                                                         feed_dict={self.y_true: q_values_target,
-                                                             self.input: batch["state"]/255,
+                                                             self.input: batch["state"]/self.z,
                                                              self.mask: mask})
                 self.file_writer.add_summary(loss_summary, i)
             # update target policy
@@ -397,7 +406,7 @@ class DQNAgent:
             is_terminal = 0
             while not is_terminal:
                 processed_state = self.test_preprocessor.process_state_for_network(state)
-                q_values = self.calc_q_values(np.expand_dims(processed_state/255, axis=0))
+                q_values = self.calc_q_values(np.expand_dims(processed_state/self.z, axis=0))
                 # print('q_values: {0}'.format(q_values))
                 action = self.select_action(q_values)
                 # print('action: {0}'.format(action))
