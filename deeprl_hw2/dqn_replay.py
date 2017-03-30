@@ -9,6 +9,7 @@ from PIL import Image
 
 from keras.models import Model
 import tensorflow as tf
+import math
 
 
 class DQNAgent:
@@ -423,4 +424,86 @@ class DQNAgent:
         env.close()
         return average_reward
 
+    def compile_test_model(self, iter):
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        # config.log_device_placement = True
+        config.allow_soft_placement = True
+
+        # with tf.Session(config=config) as sess:
+
+        self.sess = tf.Session(config=config)
+
+        self.y_pred = self.model.outputs[0]
+        self.input = self.model.inputs[0]
+
+        self.init_op = tf.group(tf.initialize_all_variables(), tf.initialize_local_variables())
+        # self.test_reward = tf.placeholder(tf.float32, shape=(), name='test_reward')
+
+        # init Q-network
+        # check if checkpoint exists
+        self.model_saver = tf.train.Saver(self.model.trainable_weights)
+        self.sess.run(self.init_op)
+
+
+        print("compile finished")
+
+        save_dir = os.path.join(self.logdir, 'checkpoints', str(iter))
+        self.model_saver.restore(self.sess, save_dir)
+        print("load model finished")
+
+
+    def test_trained_model(self, num_episodes, iter):
+        """Test your agent with a provided environment.
+
+        You shouldn't update your network parameters here. Also if you
+        have any layers that vary in behavior between train/test time
+        (such as dropout or batch norm), you should set them to test.
+
+        Basically run your policy on the environment and collect stats
+        like cumulative reward, average episode length, etc.
+
+        You can also call the render function here if you want to
+        visually inspect your policy.
+        """
+        monitor_dir = os.path.join(self.logdir, 'gym_monitor', 'test_'+str(iter))
+        print("Monitored evaluation video saved at {0}".format(monitor_dir))
+        if os.path.exists(monitor_dir):
+            shutil.rmtree(monitor_dir)
+        env = gym.make(self.env_name)
+        env = wrappers.Monitor(env, monitor_dir)
+        total_reward = 0
+        max_reward = 0
+        min_reward = 10000000
+        rewards = []
+        for i in range(num_episodes):
+            state = env.reset()
+            self.test_preprocessor.reset()
+            is_terminal = 0
+            episode_reward = 0
+            while not is_terminal:
+                processed_state = self.test_preprocessor.process_state_for_network(state)
+                q_values = self.calc_q_values(np.expand_dims(processed_state/self.z, axis=0))
+                # print('q_values: {0}'.format(q_values))
+                action = self.select_action(q_values)
+                # print('action: {0}'.format(action))
+                next_state, reward, is_terminal, debug_info = env.step(action)
+                episode_reward += reward
+                state = next_state
+                # env.render()
+            self.test_preprocessor.reset()
+            print(episode_reward)
+            rewards.append(episode_reward)
+            total_reward += episode_reward
+            max_reward = max(max_reward, episode_reward)
+            min_reward = min(min_reward, episode_reward)
+
+        env.close()
+        average_reward = total_reward / num_episodes
+        std_reward = 0
+        for i in range(rewards):
+            std_reward += (rewards[i]-average_reward)**2
+        std_reward = math.sqrt(std_reward/num_episodes)
+
+        return average_reward, max_reward, min_reward, std_reward
 
