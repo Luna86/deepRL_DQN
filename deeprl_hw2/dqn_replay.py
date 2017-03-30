@@ -501,7 +501,7 @@ class DQNAgent:
         env.close()
         average_reward = total_reward / num_episodes
         std_reward = 0
-        for i in range(rewards):
+        for i in range(len(rewards)):
             std_reward += (rewards[i]-average_reward)**2
         std_reward = math.sqrt(std_reward/num_episodes)
 
